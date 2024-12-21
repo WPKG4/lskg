@@ -1,0 +1,31 @@
+micronaut:
+  application:
+    name: lskg
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+      swagger-ui:
+        paths: classpath:META-INF/swagger/views/swagger-ui
+        mapping: /swagger-ui/**
+  security:
+    authentication: bearer
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/lskg
+    driverClassName: org.postgresql.Driver
+    username: root
+    password: 1234
+    dialect: POSTGRES
+    schema-generate: CREATE
+flyway:
+  datasources:
+    default:
+      enabled: true

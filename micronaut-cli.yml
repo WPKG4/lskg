@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: ovh.wpkg.lskg
+testFramework: junit
+sourceLanguage: java
+buildTool: maven
+features: [app-name, data, data-jdbc, flyway, github-workflow-ci, http-client-test, java, java-application, jdbc-hikari, junit, logback, lombok, maven, maven-enforcer-plugin, micronaut-aot, micronaut-http-validation, netty-server, openapi, postgres, readme, security-annotations, security-jwt, serialization-jackson, shade, static-resources, swagger-ui, test-resources, websocket, yaml, yaml-build]
