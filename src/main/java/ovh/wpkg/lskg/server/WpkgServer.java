@@ -5,14 +5,16 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.handler.CommandExecutorHandler;
-import ovh.wpkg.lskg.server.handler.WPKGDecoder;
-import ovh.wpkg.lskg.server.handler.WPKGEncoder;
+import ovh.wpkg.lskg.server.handler.WtpInboundHandler;
+import ovh.wpkg.lskg.server.handler.WtpOutboundHandler;
 
-public class WPKGServer {
+@Slf4j
+public class WpkgServer {
     private final int port;
 
-    public WPKGServer(int port) {
+    public WpkgServer(int port) {
         this.port = port;
     }
 
@@ -27,15 +29,17 @@ public class WPKGServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
+
+                            System.out.println("SSSS");
                             ch.pipeline()
-                                    .addLast(new WPKGDecoder())  // Dekodowanie przychodzących danych
-                                    .addLast(new CommandExecutorHandler())  // Przetwarzanie danych
-                                    .addLast(new WPKGEncoder());  // Kodowanie wychodzących danych
+                                    .addLast(new WtpInboundHandler())
+                                    .addLast(new CommandExecutorHandler())
+                                    .addLast(new WtpOutboundHandler());
                         }
                     });
 
             ChannelFuture f = b.bind(port).sync();
-            System.out.println("Server started on port: " + port);
+            log.debug("LSKG Server started on port: {}", port);
             f.channel().closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();

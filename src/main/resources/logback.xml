@@ -11,4 +11,8 @@
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
+
+    <logger name="ovh.wpkg.lskg" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
 </configuration>
