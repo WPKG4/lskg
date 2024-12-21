@@ -6,9 +6,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.slf4j.Slf4j;
+import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
 import ovh.wpkg.lskg.server.handler.CommandExecutorHandler;
 import ovh.wpkg.lskg.server.handler.WtpInboundHandler;
 import ovh.wpkg.lskg.server.handler.WtpOutboundHandler;
+import ovh.wpkg.lskg.server.command.CommandRegistry;
 
 @Slf4j
 public class WpkgServer {
@@ -21,6 +23,7 @@ public class WpkgServer {
     public void start() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
+        CommandRegistry.registerCommand(DefaultCommands.class);
 
         try {
             ServerBootstrap b = new ServerBootstrap();
@@ -29,8 +32,6 @@ public class WpkgServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
-
-                            System.out.println("SSSS");
                             ch.pipeline()
                                     .addLast(new WtpInboundHandler())
                                     .addLast(new CommandExecutorHandler())
