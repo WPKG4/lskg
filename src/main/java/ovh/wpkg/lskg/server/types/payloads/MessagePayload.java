@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import ovh.wpkg.lskg.server.types.WTPPayload;
 
+
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public @Data class MessagePayload extends WTPPayload {

@@ -12,7 +12,9 @@ import ovh.wpkg.lskg.server.types.payloads.SubscribePayload;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class WtpDecoder extends ByteToMessageDecoder {
@@ -20,8 +22,7 @@ public class WtpDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         byte payloadType = in.readByte();
-        
-        log.debug("Inbound handler processing: {}", payloadType);
+
         switch (payloadType) {
             case 'm' -> handleMessage(in, out);
             case 'b' -> handleBinary(in, out);
@@ -71,8 +72,46 @@ public class WtpDecoder extends ByteToMessageDecoder {
     }
 
     private void handleAction(ByteBuf in, List<Object> out) throws Exception {
-        out.add(new ActionPayload());
+
+        StringBuilder packetBuilder = new StringBuilder();
+        do {
+            char c = (char) in.readByte();
+            packetBuilder.append(c);
+        } while (!packetBuilder.toString().endsWith("\n\n"));
+
+        String packetData = packetBuilder.toString().trim();
+
+        // Split the data into action name and parameters
+        String[] parts = packetData.split("\n", 2);
+        String actionName = parts[0].trim();
+        log.debug("Received action name: {}", actionName);
+
+        Map<String, String> parameters = new HashMap<>();
+        if (parts.length > 1) {
+            String params = parts[1].trim();
+            String[] paramLines = params.split("\n");
+
+            for (String paramLine : paramLines) {
+                paramLine = paramLine.trim();
+                if (!paramLine.isEmpty()) {
+                    String[] paramParts = paramLine.split(":", 2);
+                    if (paramParts.length == 2) {
+                        parameters.put(paramParts[0].trim(), paramParts[1].trim());
+                    } else {
+                        log.warn("Skipping invalid parameter: {}", paramLine);
+                    }
+                }
+            }
+        }
+
+        // Create the ActionPayload object
+        ActionPayload payload = new ActionPayload();
+        payload.setName(actionName);
+        payload.setParameters(parameters);
+
+        out.add(payload); // Add the payload to the output list
     }
+
 
     private void handleSubscribe(ByteBuf in, List<Object> out) throws  Exception {
         out.add(new SubscribePayload());
