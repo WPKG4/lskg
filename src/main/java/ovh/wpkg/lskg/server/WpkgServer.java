@@ -7,9 +7,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
-import ovh.wpkg.lskg.server.handler.CommandExecutorHandler;
-import ovh.wpkg.lskg.server.handler.WtpInboundHandler;
-import ovh.wpkg.lskg.server.handler.WtpOutboundHandler;
+import ovh.wpkg.lskg.server.handler.WtpDecoder;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 
 @Slf4j
@@ -29,13 +27,16 @@ public class WpkgServer {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
+                    .childOption(ChannelOption.SO_RCVBUF, 64 * 1024)
+                    .childOption(ChannelOption.SO_SNDBUF, 64 * 1024)
+                    .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(64 * 1024))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
-                                    .addLast(new WtpInboundHandler())
-                                    .addLast(new WtpOutboundHandler())
-                                    .addLast(new CommandExecutorHandler());
+                                    .addLast(new WtpDecoder());
+                                    //.addLast(new WtpOutboundHandler())
+                                    //.addLast(new CommandExecutorHandler());
                         }
                     });
 

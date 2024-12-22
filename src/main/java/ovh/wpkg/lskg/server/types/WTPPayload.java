@@ -4,6 +4,5 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @AllArgsConstructor
-public @Data class WpkgPayload {
-    private String payload;
+public @Data class WTPPayload {
 }

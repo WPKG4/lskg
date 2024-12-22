@@ -6,16 +6,16 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.types.CommandOutput;
-import ovh.wpkg.lskg.server.types.WpkgPayload;
+import ovh.wpkg.lskg.server.types.WTPPayload;
 
 import java.lang.reflect.Method;
 
 @Slf4j
-public class CommandExecutorHandler extends SimpleChannelInboundHandler<WpkgPayload> {
+public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPayload> {
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, WpkgPayload msg) {
-        String payload = msg.getPayload();
+    protected void channelRead0(ChannelHandlerContext ctx, WTPPayload msg) {
+        String payload = "sd";//msg.getPayload();
         log.debug("Received payload: {}", payload);
 
         if (payload.startsWith("$lskg ")) {
@@ -54,8 +54,8 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WpkgPayl
         ctx.writeAndFlush(new CommandOutput(commandResult, 0)).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
     }
 
-    private void handleOtherPayload(ChannelHandlerContext ctx, WpkgPayload msg) {
-        log.debug("Handling non-command payload: {}", msg.getPayload());
+    private void handleOtherPayload(ChannelHandlerContext ctx, WTPPayload msg) {
+        //log.debug("Handling non-command payload: {}", msg.getPayload());
 
         ctx.writeAndFlush(new CommandOutput("Unsupported payload type", 1));
     }
