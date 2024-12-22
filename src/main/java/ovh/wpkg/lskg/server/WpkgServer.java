@@ -34,8 +34,8 @@ public class WpkgServer {
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
                                     .addLast(new WtpInboundHandler())
-                                    .addLast(new CommandExecutorHandler())
-                                    .addLast(new WtpOutboundHandler());
+                                    .addLast(new WtpOutboundHandler())
+                                    .addLast(new CommandExecutorHandler());
                         }
                     });
 
