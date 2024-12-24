@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.types.CommandOutput;
 import ovh.wpkg.lskg.server.types.WTPPayload;
+import ovh.wpkg.lskg.server.types.payloads.ActionPayload;
+import ovh.wpkg.lskg.server.types.payloads.MessagePayload;
 
 import java.lang.reflect.Method;
 
@@ -15,31 +17,28 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WTPPayload msg) {
-        String payload = "sd";//msg.getPayload();
-        log.debug("Received payload: {}", payload);
-
-        if (payload.startsWith("$lskg ")) {
-            handleCommand(ctx, payload.substring("$lskg ".length()));
-        } else {
-            handleOtherPayload(ctx, msg);
+        switch (msg) {
+            case MessagePayload test -> {
+                log.debug("Received MessagePayload: {}", test.Message);
+            }
+            case ActionPayload actionPayload -> {
+                handleActionPayload(ctx ,actionPayload);
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + msg);
         }
     }
 
-    private void handleCommand(ChannelHandlerContext ctx, String commandPayload) {
-        String[] parts = commandPayload.split(" ", 2);
-        String commandName = parts[0];
-        String commandArg = parts.length > 1 ? parts[1] : null;
-
+    private void handleActionPayload(ChannelHandlerContext ctx, ActionPayload payload) { //TODO: naprawić tą starą funkcje, działa ale chujowo
         String commandResult;
 
-        if (CommandRegistry.hasCommand(commandName)) {
+        if (CommandRegistry.hasCommand(payload.name)) {
             try {
-                Method command = CommandRegistry.getCommand(commandName);
+                Method command = CommandRegistry.getCommand(payload.name);
                 Object result;
                 if (command.getParameterCount() == 0) {
                     result = command.invoke(null);
                 } else {
-                    result = command.invoke(null, commandArg);
+                    result = command.invoke(null, payload.parameters);
                 }
                 commandResult = result.toString();
             } catch (Exception e) {
@@ -47,7 +46,7 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
                 commandResult = "Error: " + e.getMessage();
             }
         } else {
-            commandResult = "Unknown command: " + commandName;
+            commandResult = "Unknown command: " + payload.name;
         }
 
         log.debug("Command result: {}", commandResult);
@@ -55,8 +54,6 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
     }
 
     private void handleOtherPayload(ChannelHandlerContext ctx, WTPPayload msg) {
-        //log.debug("Handling non-command payload: {}", msg.getPayload());
-
         ctx.writeAndFlush(new CommandOutput("Unsupported payload type", 1));
     }
 }

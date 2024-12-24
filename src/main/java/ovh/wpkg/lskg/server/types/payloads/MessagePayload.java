@@ -8,7 +8,7 @@ import ovh.wpkg.lskg.server.types.WTPPayload;
 
 
 @EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
+@AllArgsConstructor
 public @Data class MessagePayload extends WTPPayload {
     public String Message;
 }
