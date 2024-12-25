@@ -8,9 +8,9 @@ import ovh.wpkg.lskg.server.handler.decoder.ActionDecoder;
 import ovh.wpkg.lskg.server.handler.decoder.MessageDecoder;
 
 @Slf4j
-public class WtpDecoder extends DelimiterBasedFrameDecoder  {
+public class HeaderDecoder extends DelimiterBasedFrameDecoder  {
 
-    public WtpDecoder(int maxFrameLength, ByteBuf delimiter) {
+    public HeaderDecoder(int maxFrameLength, ByteBuf delimiter) {
         super(maxFrameLength, delimiter);
     }
 
@@ -26,14 +26,14 @@ public class WtpDecoder extends DelimiterBasedFrameDecoder  {
                     ctx.pipeline().addAfter("HeaderDecoder", "MessageDecoder", new MessageDecoder(Integer.parseInt(header[1])));
                     ctx.pipeline().remove(this);
                     if (in.isReadable()) {
-                        ctx.fireChannelRead(in.readBytes(in.readableBytes()));
+                        return in.readBytes(in.readableBytes());
                     }
                 }
                 case "a" -> {
                     ctx.pipeline().addAfter("HeaderDecoder", "ActionDecoder", new ActionDecoder(header[1]));
                     ctx.pipeline().remove(this);
                     if (in.isReadable()) {
-                        ctx.fireChannelRead(in.readBytes(in.readableBytes()));
+                        return in.readBytes(in.readableBytes());
                     }
                 }
                 default -> throw new Exception(String.format("Packet type \"%s\" not implemented", header[0]));

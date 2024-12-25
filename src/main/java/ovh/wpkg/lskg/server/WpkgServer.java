@@ -1,7 +1,6 @@
 package ovh.wpkg.lskg.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -10,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
 import ovh.wpkg.lskg.server.config.ServerConfig;
 import ovh.wpkg.lskg.server.handler.CommandExecutorHandler;
-import ovh.wpkg.lskg.server.handler.WtpDecoder;
+import ovh.wpkg.lskg.server.handler.HeaderDecoder;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.handler.WtpOutboundHandler;
 
@@ -38,7 +37,7 @@ public class WpkgServer {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
-                                    .addLast("HeaderDecoder", new WtpDecoder(ServerConfig.MAX_HEADER_SIZE, ServerConfig.HEADER_DELIMITER))
+                                    .addLast("HeaderDecoder", new HeaderDecoder(ServerConfig.MAX_HEADER_SIZE, ServerConfig.HEADER_DELIMITER))
                                     .addLast(new WtpOutboundHandler())
                                     .addLast(new CommandExecutorHandler());
                         }

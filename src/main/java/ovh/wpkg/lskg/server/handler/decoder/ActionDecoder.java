@@ -22,7 +22,7 @@ public class ActionDecoder extends DelimiterBasedFrameDecoder {
     }
 
     @Override
-    protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception { // TODO: brak parametrów? to się spierdoli
+    protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
         if (in.readableBytes() < 2) {
             return null;
         }
@@ -43,6 +43,11 @@ public class ActionDecoder extends DelimiterBasedFrameDecoder {
         }
 
         ByteBuf packet = in.readSlice(i);
+        in.skipBytes(2);
+
+        if (packet.readableBytes() == 0) {
+            return new ActionPayload(actionName, new HashMap<>());
+        }
 
         String packetString = packet.toString(CharsetUtil.UTF_8);
 
@@ -51,13 +56,14 @@ public class ActionDecoder extends DelimiterBasedFrameDecoder {
         Map<String, String> parameters = new HashMap<>();
 
         for (String entry : rawParameters) {
-            String[] parts = entry.split(": ");
+            if (entry.trim().isEmpty()) continue;
+            String[] parts = entry.split(": ", 2);
             if (parts.length == 2) {
-                parameters.put(parts[0], parts[1]);
+                parameters.put(parts[0].trim(), parts[1].trim());
             }
         }
 
-        ctx.fireChannelRead(new ActionPayload(actionName, parameters));
-        return null;
+        return new ActionPayload(actionName, parameters);
     }
+
 }
