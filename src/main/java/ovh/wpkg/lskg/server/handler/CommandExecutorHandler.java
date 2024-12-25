@@ -5,6 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
+import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.CommandOutput;
 import ovh.wpkg.lskg.server.types.WTPPayload;
 import ovh.wpkg.lskg.server.types.payloads.ActionPayload;
@@ -14,6 +15,12 @@ import java.lang.reflect.Method;
 
 @Slf4j
 public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPayload> {
+
+    private WtpClientService clientService;
+
+    public CommandExecutorHandler(WtpClientService clientService) {
+        this.clientService = clientService;
+    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WTPPayload msg) {
@@ -28,7 +35,7 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
         }
     }
 
-    private void handleActionPayload(ChannelHandlerContext ctx, ActionPayload payload) { //TODO: naprawić tą starą funkcje, działa ale chujowo
+    private void handleActionPayload(ChannelHandlerContext ctx, ActionPayload payload) {
         String commandResult;
 
         if (CommandRegistry.hasCommand(payload.name)) {

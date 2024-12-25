@@ -1,8 +1,8 @@
 package ovh.wpkg.lskg;
 
+import io.micronaut.runtime.Micronaut;
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.info.*;
-import ovh.wpkg.lskg.server.WpkgServer;
 
 @OpenAPIDefinition(
     info = @Info(
@@ -13,7 +13,6 @@ import ovh.wpkg.lskg.server.WpkgServer;
 public class Application {
 
     public static void main(String[] args) throws Exception {
-        var tcpServer = new WpkgServer(8080);
-        tcpServer.start();
+        Micronaut.run(args);
     }
 }

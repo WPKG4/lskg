@@ -1,10 +1,14 @@
 package ovh.wpkg.lskg.server;
 
+import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.context.event.StartupEvent;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
 import ovh.wpkg.lskg.server.config.ServerConfig;
@@ -12,14 +16,16 @@ import ovh.wpkg.lskg.server.handler.CommandExecutorHandler;
 import ovh.wpkg.lskg.server.handler.HeaderDecoder;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.handler.WtpOutboundHandler;
+import ovh.wpkg.lskg.server.services.WtpClientService;
 
 @Slf4j
-public class WpkgServer {
-    private final int port;
+@Singleton
+public class WpkgServer implements ApplicationEventListener<StartupEvent> {
+    // TODO: Add loading from file
+    private static final int port = 5000;
 
-    public WpkgServer(int port) {
-        this.port = port;
-    }
+    @Inject
+    private WtpClientService clientService;
 
     public void start() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -39,7 +45,7 @@ public class WpkgServer {
                             ch.pipeline()
                                     .addLast("HeaderDecoder", new HeaderDecoder(ServerConfig.MAX_HEADER_SIZE, ServerConfig.HEADER_DELIMITER))
                                     .addLast(new WtpOutboundHandler())
-                                    .addLast(new CommandExecutorHandler());
+                                    .addLast(new CommandExecutorHandler(clientService));
                         }
                     });
 
@@ -50,5 +56,16 @@ public class WpkgServer {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
+    }
+
+    @Override
+    public void onApplicationEvent(StartupEvent event) {
+        Thread.ofVirtual().start(() -> {
+            try {
+                start();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

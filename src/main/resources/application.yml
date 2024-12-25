@@ -18,13 +18,13 @@ micronaut:
             generator:
               secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
 datasources:
-  default:
-    url: jdbc:postgresql://localhost:5432/lskg
-    driverClassName: org.postgresql.Driver
-    username: root
-    password: 1234
-    dialect: POSTGRES
-    schema-generate: CREATE
+#  default:
+#    url: jdbc:postgresql://localhost:5432/lskg
+#    driverClassName: org.postgresql.Driver
+#    username: root
+#    password: 1234
+#    dialect: POSTGRES
+#    schema-generate: CREATE
 flyway:
   datasources:
     default:
