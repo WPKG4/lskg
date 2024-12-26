@@ -25,12 +25,14 @@ public class WpkgServer implements ApplicationEventListener<StartupEvent> {
     private static final int port = 5000;
 
     @Inject
+    private DefaultCommands defaultCommands;
+    @Inject
     private WtpClientService clientService;
 
     public void start() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        CommandRegistry.registerCommand(DefaultCommands.class);
+        CommandRegistry.registerCommand(defaultCommands);
 
         try {
             ServerBootstrap b = new ServerBootstrap();

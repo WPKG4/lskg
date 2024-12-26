@@ -1,6 +1,5 @@
 package ovh.wpkg.lskg.server.handler;
 
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -40,12 +39,15 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
 
         if (CommandRegistry.hasCommand(payload.name)) {
             try {
-                Method command = CommandRegistry.getCommand(payload.name);
+                CommandRegistry.CommandEntry commandEntry = CommandRegistry.getCommand(payload.name);
+                Method commandMethod = commandEntry.method();
+                Object commandInstance = commandEntry.instance();
+
                 Object result;
-                if (command.getParameterCount() == 0) {
-                    result = command.invoke(null);
+                if (commandMethod.getParameterCount() == 0) {
+                    result = commandMethod.invoke(commandInstance);
                 } else {
-                    result = command.invoke(null, payload.parameters);
+                    result = commandMethod.invoke(commandInstance, payload.parameters, ctx.channel());
                 }
                 commandResult = result.toString();
             } catch (Exception e) {
@@ -56,8 +58,8 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
             commandResult = "Unknown command: " + payload.name;
         }
 
-        log.debug("Command result: {}", commandResult);
-        ctx.writeAndFlush(new CommandOutput(commandResult, 0)).addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+        log.debug("{}Command result: {}",ctx.channel().isActive(), commandResult);
+        //ctx.writeAndFlush(new CommandOutput(commandResult, 0));
     }
 
     private void handleOtherPayload(ChannelHandlerContext ctx, WTPPayload msg) {
