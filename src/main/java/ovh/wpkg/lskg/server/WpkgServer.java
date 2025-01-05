@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
-import ovh.wpkg.lskg.server.handler.CommandExecutorHandler;
+import ovh.wpkg.lskg.server.handler.PayloadLogicHandler;
 import ovh.wpkg.lskg.server.handler.HeaderDecoder;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.handler.WtpOutboundHandler;
@@ -43,7 +43,7 @@ public class WpkgServer implements ApplicationEventListener<StartupEvent> {
                             ch.pipeline()
                                     .addLast("HeaderDecoder", new HeaderDecoder())
                                     .addLast(new WtpOutboundHandler())
-                                    .addLast(new CommandExecutorHandler());
+                                    .addLast(new PayloadLogicHandler());
                         }
                     });
 

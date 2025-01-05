@@ -4,21 +4,21 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
-import ovh.wpkg.lskg.server.types.CommandOutput;
 import ovh.wpkg.lskg.server.types.WTPPayload;
 import ovh.wpkg.lskg.server.types.payloads.ActionPayload;
 import ovh.wpkg.lskg.server.types.payloads.MessagePayload;
+import ovh.wpkg.lskg.server.types.responses.ActionResponse;
 
 import java.lang.reflect.Method;
 
 @Slf4j
-public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPayload> {
+public class PayloadLogicHandler extends SimpleChannelInboundHandler<WTPPayload> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WTPPayload msg) {
         switch (msg) {
             case MessagePayload messagePayload -> {
-                ctx.writeAndFlush(handleMessagePayload(messagePayload));
+                handleMessagePayload(messagePayload);
             }
             case ActionPayload actionPayload -> {
                 ctx.writeAndFlush(handleActionPayload(ctx ,actionPayload));
@@ -27,8 +27,8 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
         }
     }
 
-    private CommandOutput handleActionPayload(ChannelHandlerContext ctx, ActionPayload payload) {
-        CommandOutput commandResult = null;
+    private ActionResponse handleActionPayload(ChannelHandlerContext ctx, ActionPayload payload) {
+        ActionResponse commandResult = null;
 
         if (CommandRegistry.hasCommand(payload.name)) {
             try {
@@ -42,17 +42,25 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
                 } else {
                     result = commandMethod.invoke(commandInstance, payload.parameters, ctx.channel());
                 }
-                commandResult = (CommandOutput) result;
+                if (result instanceof ActionResponse) {
+                    commandResult = (ActionResponse) result;
+                } else {
+                    String message = "Invalid command result type.";
+                    commandResult = new ActionResponse(payload.name, 1, message, message.length());
+                }
             } catch (Exception e) {
-                log.error("Error executing command", e);
+                String message = "Error executing command: " + e.getMessage();
+                log.error(message, e);
+                commandResult = new ActionResponse(payload.name, 2, message, message.length());
             }
         } else {
-            commandResult = new CommandOutput("Unknown command!", 1);
+            String message = "Unknown command!";
+            commandResult = new ActionResponse(payload.name, 1, message, message.length());
         }
         return commandResult;
     }
 
-    private CommandOutput handleMessagePayload(MessagePayload msg) {
-        return new CommandOutput(msg.Message, 0);
+    private void handleMessagePayload(MessagePayload msg) {
+        //TODO: zrób coś z message
     }
 }

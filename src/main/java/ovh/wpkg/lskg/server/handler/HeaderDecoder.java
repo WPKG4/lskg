@@ -20,7 +20,7 @@ public class HeaderDecoder extends DelimiterBasedFrameDecoder  {
         ByteBuf decoded = (ByteBuf) super.decode(ctx, in);
 
         if (decoded != null) {
-            log.debug("Frame decoded: {}", decoded.toString(io.netty.util.CharsetUtil.UTF_8));
+            log.debug("Header decoded: {}", decoded.toString(io.netty.util.CharsetUtil.UTF_8));
             String[] header = decoded.toString(io.netty.util.CharsetUtil.UTF_8).split(" ");
             switch (header[0]) {
                 case "m" -> {

@@ -4,7 +4,4 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @AllArgsConstructor
-public @Data class CommandOutput {
-    private String result;
-    private int statusCode;
-}
+public @Data class WTPResponse { }

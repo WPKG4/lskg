@@ -5,7 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import ovh.wpkg.lskg.server.command.Command;
 import ovh.wpkg.lskg.server.services.WtpClientService;
-import ovh.wpkg.lskg.server.types.CommandOutput;
+import ovh.wpkg.lskg.server.types.responses.ActionResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,12 +19,13 @@ public class DefaultCommands {
     public WtpClientService wtpClientService;
 
     @Command(name = "hello")
-    public CommandOutput hello(Channel channel) {
-        return new CommandOutput("Hello World!", 0);
+    public ActionResponse hello(Channel channel) {
+        String message = "Hello World!";
+        return new ActionResponse("hello", 0, message, message.length());
     }
 
     @Command(name = "echo")
-    public CommandOutput echo(Map<String, String> params, Channel channel) {
+    public ActionResponse echo(Map<String, String> params, Channel channel) {
         StringBuilder result = new StringBuilder("Echo: ");
         for (Map.Entry<String, String> entry : params.entrySet()) {
             result.append(entry.getKey())
@@ -32,16 +33,18 @@ public class DefaultCommands {
                     .append(entry.getValue())
                     .append(" ");
         }
-        return new CommandOutput(result.toString().trim(), 0);
+        String message = result.toString().trim();
+        return new ActionResponse("echo", 0, message, message.length());
     }
 
     @Command(name = "core-init")
-    public CommandOutput coreInit(Map<String, String> params, Channel channel) {
+    public ActionResponse coreInit(Map<String, String> params, Channel channel) {
         List<String> requiredKeys = Arrays.asList("uuid", "user", "hostname");
 
         for (String key : requiredKeys) {
             if (!params.containsKey(key) || params.get(key) == null || params.get(key).isEmpty()) {
-                return new CommandOutput("Missing or empty parameter: " + key, 1);
+                String message = "Missing or empty parameter: " + key;
+                return new ActionResponse("core-init", 1, message, message.length());
             }
         }
 
@@ -51,11 +54,14 @@ public class DefaultCommands {
             String hostname = params.get("hostname");
 
             wtpClientService.addClient(channel, uuid, user, hostname);
-            return new CommandOutput("Client " + user + " has been added!", 0);
+            String message = "Client " + user + " has been added!";
+            return new ActionResponse("core-init", 0, message, message.length());
         } catch (IllegalArgumentException e) {
-            return new CommandOutput("Invalid UUID format: " + params.get("uuid"), 2);
+            String message = "Invalid UUID format: " + params.get("uuid");
+            return new ActionResponse("core-init", 2, message, message.length());
         } catch (Exception e) {
-            return new CommandOutput("An unexpected error occurred: " + e.getMessage(), 3);
+            String message = "An unexpected error occurred: " + e.getMessage();
+            return new ActionResponse("core-init", 3, message, message.length());
         }
     }
 }
