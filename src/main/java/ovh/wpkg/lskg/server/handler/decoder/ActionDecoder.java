@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
+import ovh.wpkg.lskg.server.handler.HeaderDecoder;
 import ovh.wpkg.lskg.server.types.payloads.ActionPayload;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ public class ActionDecoder extends DelimiterBasedFrameDecoder {
     private final String actionName;
 
     public ActionDecoder(String actionName) {
-        super(Integer.MAX_VALUE, Unpooled.wrappedBuffer(new byte[]{'\n', '\n'})); // TODO: niewiem czy tu powinny być 3x \n czy 2x \n ale działa
+        super(Integer.MAX_VALUE, Unpooled.wrappedBuffer(new byte[]{'\n', '\n'}));
         this.actionName = actionName;
     }
 
@@ -41,6 +42,9 @@ public class ActionDecoder extends DelimiterBasedFrameDecoder {
         if (!foundDelimiter) {
             return null;
         }
+
+        ctx.pipeline().addBefore(ctx.name(), "HeaderDecoder", new HeaderDecoder());
+        ctx.pipeline().remove(this);
 
         ByteBuf packet = in.readSlice(i);
         in.skipBytes(2);

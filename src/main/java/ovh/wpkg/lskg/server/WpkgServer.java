@@ -11,12 +11,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
-import ovh.wpkg.lskg.server.config.ServerConfig;
 import ovh.wpkg.lskg.server.handler.CommandExecutorHandler;
 import ovh.wpkg.lskg.server.handler.HeaderDecoder;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.handler.WtpOutboundHandler;
-import ovh.wpkg.lskg.server.services.WtpClientService;
 
 @Slf4j
 @Singleton
@@ -26,8 +24,6 @@ public class WpkgServer implements ApplicationEventListener<StartupEvent> {
 
     @Inject
     private DefaultCommands defaultCommands;
-    @Inject
-    private WtpClientService clientService;
 
     public void start() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -45,9 +41,9 @@ public class WpkgServer implements ApplicationEventListener<StartupEvent> {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
-                                    .addLast("HeaderDecoder", new HeaderDecoder(ServerConfig.MAX_HEADER_SIZE, ServerConfig.HEADER_DELIMITER))
+                                    .addLast("HeaderDecoder", new HeaderDecoder())
                                     .addLast(new WtpOutboundHandler())
-                                    .addLast(new CommandExecutorHandler(clientService));
+                                    .addLast(new CommandExecutorHandler());
                         }
                     });
 
