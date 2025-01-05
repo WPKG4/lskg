@@ -9,12 +9,10 @@ import java.util.*;
 @Singleton
 @Slf4j
 public class WtpClientService {
-
-    // TODO: Add methods to add and delete clients
     private List<WtpClient> clients = new ArrayList<>();
 
-    public void addClient(Channel channel, UUID uuid){
-        clients.add(new WtpClient(channel, uuid));
+    public void addClient(Channel channel, UUID uuid, String username, String hostname){
+        clients.add(new WtpClient(channel, uuid, username, hostname));
     }
 
     public void removeClient(UUID uuid){

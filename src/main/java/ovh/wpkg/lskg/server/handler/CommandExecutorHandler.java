@@ -37,7 +37,7 @@ public class CommandExecutorHandler extends SimpleChannelInboundHandler<WTPPaylo
                 Object commandInstance = commandEntry.instance();
 
                 Object result;
-                if (commandMethod.getParameterCount() == 0) {
+                if (commandMethod.getParameterCount() == 1) {
                     result = commandMethod.invoke(commandInstance, ctx.channel());
                 } else {
                     result = commandMethod.invoke(commandInstance, payload.parameters, ctx.channel());

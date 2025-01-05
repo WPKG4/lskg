@@ -10,4 +10,6 @@ import java.util.UUID;
 public @Data class WtpClient {
     public Channel channel;
     public UUID uuid;
+    public String username;
+    public String hostname;
 }
