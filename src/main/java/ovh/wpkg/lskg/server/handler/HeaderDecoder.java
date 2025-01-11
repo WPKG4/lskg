@@ -3,6 +3,7 @@ package ovh.wpkg.lskg.server.handler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.config.ServerConfig;
 import ovh.wpkg.lskg.server.handler.decoder.ActionDecoder;
@@ -20,9 +21,14 @@ public class HeaderDecoder extends DelimiterBasedFrameDecoder  {
         ByteBuf decoded = (ByteBuf) super.decode(ctx, in);
 
         if (decoded != null) {
-            log.debug("Header decoded: {}", decoded.toString(io.netty.util.CharsetUtil.UTF_8));
-            String[] header = decoded.toString(io.netty.util.CharsetUtil.UTF_8).split(" ");
+            log.debug("Header decoded: {}", decoded.toString(CharsetUtil.UTF_8));
+            String[] header = decoded.toString(CharsetUtil.UTF_8).split(" ");
             switch (header[0]) {
+                case "p" -> {
+                    var buffer = ctx.alloc().buffer(1);
+                    buffer.writeByte((byte) 0x70);
+                    ctx.write(buffer);
+                }
                 case "m" -> {
                     ctx.pipeline().addAfter(ctx.name(), "MessageDecoder", new MessageDecoder(Integer.parseInt(header[1])));
                     ctx.pipeline().remove(this);
