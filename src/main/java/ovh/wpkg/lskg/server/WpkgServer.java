@@ -41,8 +41,8 @@ public class WpkgServer implements ApplicationEventListener<StartupEvent> {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
-                                    .addLast("HeaderDecoder", new HeaderDecoder())
                                     .addLast(new WtpOutboundHandler())
+                                    .addLast("HeaderDecoder", new HeaderDecoder())
                                     .addLast(new PayloadLogicHandler());
                         }
                     });

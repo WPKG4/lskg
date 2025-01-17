@@ -7,7 +7,7 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.handler.HeaderDecoder;
-import ovh.wpkg.lskg.server.types.payloads.ActionPayload;
+import ovh.wpkg.lskg.server.types.in.ActionInPayload;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class ActionDecoder extends DelimiterBasedFrameDecoder {
         in.skipBytes(2);
 
         if (packet.readableBytes() == 0) {
-            return new ActionPayload(actionName, new HashMap<>());
+            return new ActionInPayload(actionName, new HashMap<>());
         }
 
         String packetString = packet.toString(CharsetUtil.UTF_8);
@@ -67,7 +67,7 @@ public class ActionDecoder extends DelimiterBasedFrameDecoder {
             }
         }
 
-        return new ActionPayload(actionName, parameters);
+        return new ActionInPayload(actionName, parameters);
     }
 
 }

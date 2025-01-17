@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.buffer.ByteBuf;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.handler.HeaderDecoder;
-import ovh.wpkg.lskg.server.types.payloads.MessagePayload;
+import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 
 @Slf4j
 public class MessageDecoder extends FixedLengthFrameDecoder {

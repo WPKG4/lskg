@@ -1,4 +1,4 @@
-package ovh.wpkg.lskg.server.services;
+package ovh.wpkg.lskg.server.dto;
 
 import io.netty.channel.Channel;
 import lombok.AllArgsConstructor;
