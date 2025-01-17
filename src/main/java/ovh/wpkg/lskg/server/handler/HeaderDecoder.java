@@ -26,6 +26,7 @@ public class HeaderDecoder extends DelimiterBasedFrameDecoder  {
             switch (header[0]) {
                 case "p" -> {
                     var buffer = ctx.alloc().buffer(1);
+                    log.debug("Received ping from: {}", ctx.channel().localAddress());
                     buffer.writeByte((byte) 0x70);
                     ctx.write(buffer);
                 }

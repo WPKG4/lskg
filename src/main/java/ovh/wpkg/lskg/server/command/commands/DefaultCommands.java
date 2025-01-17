@@ -3,6 +3,7 @@ package ovh.wpkg.lskg.server.command.commands;
 import io.netty.channel.Channel;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.Command;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.responses.ActionResponse;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Slf4j
 public class DefaultCommands {
 
     @Inject
@@ -54,7 +56,8 @@ public class DefaultCommands {
             String hostname = params.get("hostname");
 
             wtpClientService.addClient(channel, uuid, user, hostname);
-            String message = "Client " + user + " has been added!";
+            String message = "Registered client " + user + " " + hostname + " has been added!";
+            log.debug("Registered client {}, username={}, hostname={}", uuid, user, hostname);
             return new ActionResponse("core-init", 0, message, message.length());
         } catch (IllegalArgumentException e) {
             String message = "Invalid UUID format: " + params.get("uuid");

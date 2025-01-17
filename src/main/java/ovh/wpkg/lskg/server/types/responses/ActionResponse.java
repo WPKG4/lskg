@@ -12,6 +12,6 @@ public class ActionResponse extends WTPResponse {
 
     @Override
     public String toString() {
-        return String.format("%s %s %d\n%s", name, errorCode == 0 ? "OK" : "ERROR", messageLength, message);
+        return String.format("a %s %s %d\n%s", name, errorCode == 0 ? "OK" : "ERROR", messageLength, message);
     }
 }
