@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.Command;
+import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
 
@@ -19,6 +20,9 @@ public class DefaultCommands {
 
     @Inject
     public WtpClientService wtpClientService;
+
+    @Inject
+    public RatService ratService;
 
     @Command(name = "hello")
     public ActionOutPayload hello(Channel channel) {
@@ -55,9 +59,11 @@ public class DefaultCommands {
             String user = params.get("user");
             String hostname = params.get("hostname");
 
-            wtpClientService.addClient(channel, uuid, user, hostname);
+            var wtpClient = wtpClientService.getClient(channel);
+
+            ratService.addClient(wtpClient, uuid, user, hostname);
+
             String message = "Registered client " + user + " " + hostname + " has been added!";
-            log.debug("Registered client {}, username={}, hostname={}", uuid, user, hostname);
             return new ActionOutPayload("core-init", 0, message, message.length());
         } catch (IllegalArgumentException e) {
             String message = "Invalid UUID format: " + params.get("uuid");

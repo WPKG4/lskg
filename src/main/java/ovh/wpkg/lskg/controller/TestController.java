@@ -6,7 +6,7 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import ovh.wpkg.lskg.server.services.WtpClientService;
+import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 
 @Controller("/test")
@@ -15,14 +15,14 @@ import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 public class TestController {
 
     @Inject
-    WtpClientService wtpClientService;
+    RatService ratService;
 
     @Get
     public void ping() {
-        var client = wtpClientService.getClientList()[0];
+        var client = ratService.getClientList()[0];
 
         log.debug("Test");
 
-        client.getChannel().writeAndFlush(new MessagePayload("Test")).awaitUninterruptibly();
+        client.getWtpClient().send(new MessagePayload("Test")).subscribe();
     }
 }

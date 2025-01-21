@@ -12,15 +12,24 @@ import java.util.*;
 public class WtpClientService {
     private final List<WtpClient> clients = new ArrayList<>();
 
-    public void addClient(Channel channel, UUID uuid, String username, String hostname){
-        clients.add(new WtpClient(channel, uuid, username, hostname));
+    public void addClient(Channel channel) {
+        log.debug("Adding new WTP Client");
+        clients.add(new WtpClient(channel));
     }
 
     public WtpClient[] getClientList() {
         return clients.toArray(WtpClient[]::new);
     }
 
-    public void removeClient(UUID uuid){
-        clients.removeIf(client -> client.getUuid().equals(uuid));
+    public WtpClient getClient(Channel channel) {
+        return clients.stream()
+                .filter(s -> s.getChannel() == channel)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void removeByChannel(Channel channel) {
+        log.debug("Removing WTP Client");
+        clients.removeIf(client -> client.getChannel().equals(channel));
     }
 }
