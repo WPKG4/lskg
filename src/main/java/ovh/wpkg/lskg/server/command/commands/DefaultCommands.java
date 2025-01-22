@@ -5,6 +5,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.Command;
+import ovh.wpkg.lskg.server.dto.RatClient;
+import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
@@ -73,4 +75,35 @@ public class DefaultCommands {
             return new ActionOutPayload("core-init", 3, message, message.length());
         }
     }
+
+    @Command(name = "new-socket")
+    public ActionOutPayload newSocket(Map<String, String> params, Channel channel) {
+        List<String> requiredKeys = List.of("uuid");
+
+        for (String key : requiredKeys) {
+            if (!params.containsKey(key) || params.get(key) == null || params.get(key).isEmpty()) {
+                String message = "Missing or empty parameter: " + key;
+                return new ActionOutPayload("new-socket", 1, message, message.length());
+            }
+        }
+
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(params.get("uuid"));
+        } catch (IllegalArgumentException e) {
+            String message = "Invalid UUID format: " + params.get("uuid");
+            return new ActionOutPayload("new-socket", 1, message, message.length());
+        }
+
+        RatClient rat = ratService.getByUUID(uuid);
+        if (rat == null) {
+            String message = "No entity found for UUID: " + uuid;
+            return new ActionOutPayload("new-socket", 1, message, message.length());
+        }
+
+        rat.sockets.add(new WtpClient(channel));
+        String message = "Socket successfully added!";
+        return new ActionOutPayload("new-socket", 0, message, message.length());
+    }
+
 }

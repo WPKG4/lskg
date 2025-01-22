@@ -17,14 +17,23 @@ public class RatService {
 
     public void addClient(WtpClient client, UUID uuid, String username, String hostname) {
         log.debug("Registered client {}, username={}, hostname={}", uuid, username, hostname);
-        clients.add(new RatClient(client, uuid, username, hostname));
+        clients.add(new RatClient(client, uuid, username, hostname, new ArrayList<>()));
     }
 
     public RatClient[] getClientList() {
         return clients.toArray(RatClient[]::new);
     }
 
+    public RatClient getByUUID(UUID uuid) {
+        for (RatClient client : clients) {
+            if (client.getUuid().equals(uuid)) {
+                return client;
+            }
+        }
+        return null;
+    }
+
     public void removeByWtpClient(WtpClient wtpClient) {
-        clients.removeIf(client -> client.getWtpClient().equals(wtpClient));
+        clients.removeIf(client -> client.getMasterClient().equals(wtpClient));
     }
 }

@@ -6,6 +6,8 @@ import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import ovh.wpkg.lskg.server.dto.RatClient;
+import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 
@@ -23,6 +25,16 @@ public class TestController {
 
         log.debug("Test");
 
-        client.getWtpClient().send(new MessagePayload("Test")).subscribe();
+        client.getMasterClient().send(new MessagePayload("NEW")).subscribe();
+    }
+
+    @Get(uri = "broadcast")
+    public void broadcast(){
+        log.debug("Broadcast endpoint hit");
+        for (RatClient client : ratService.getClientList()) {
+            for (WtpClient socket : client.sockets) {
+                socket.send(new MessagePayload("hello")).subscribe();
+            }
+        }
     }
 }
