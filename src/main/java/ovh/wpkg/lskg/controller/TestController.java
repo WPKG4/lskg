@@ -14,6 +14,9 @@ import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
+import reactor.core.publisher.Mono;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Controller("/test")
@@ -27,34 +30,35 @@ public class TestController {
     @Inject
     RatClientPoller ratClientPoller;
 
-    @Inject
-    WtpClientService wtpClientService;
 
     @Get
     @ExecuteOn(TaskExecutors.VIRTUAL)
-    public void ping() {
-        var client = ratService.getClientList()[0];
+    public String ping() {
+        RatClient client = ratService.getClientList()[0];
 
+        WtpClient wtpClient = ratClientPoller.poolClient(client);
 
-        ratClientPoller.getClientIdFlux().subscribe((id) -> {
-            WtpClient wtpClient = wtpClientService.getClient(id);
-            wtpClient.lock();
+        wtpClient.lock();
 
-            wtpClient.receiveData(((client1, handler, payload) -> {
+        AtomicInteger i = new AtomicInteger(0);
 
-                log.debug("DATA: {}", payload);
+        wtpClient.receiveData((client1, handler, payload) -> {
+            log.debug("DATA: {}", payload);
 
+            i.incrementAndGet();
+
+            if (i.get() > 5) {
                 handler.dispose();
                 client1.unlock();
+            }
+        }).block();
 
-            })).subscribe();
-        });
-
-        client.getMasterClient().send(new MessagePayload("NEW")).subscribe();
+        return "Success";
     }
 
+
     @Get("/broadcast")
-    public void broadcast(){
+    public void broadcast() {
         log.debug("Broadcast endpoint hit");
         for (RatClient client : ratService.getClientList()) {
             for (WtpClient socket : client.sockets) {

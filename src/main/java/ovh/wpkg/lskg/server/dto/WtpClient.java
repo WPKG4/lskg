@@ -38,23 +38,25 @@ public @Data class WtpClient {
     }
 
     public Mono<Void> receiveData(ReceiveCallback callback) {
-        var handler = new ReceiveHandler();
-        var flux = receive.asFlux();
-
-        var disposable = flux.subscribe((data) -> callback.onReceive(this, handler, data));
-
-        if (handler.isDisposed()) {
-            disposable.dispose();
-            return Mono.empty();
-        }
-
         return Mono.create(sink -> {
+            ReceiveHandler handler = new ReceiveHandler();
+            var subscription = receive.asFlux().subscribe(payload -> {
+                if (!handler.isDisposed) {
+                    callback.onReceive(this, handler, payload);
+                }
+            });
+
             handler.setDisposeCallback(() -> {
-                disposable.dispose();
+                subscription.dispose();
                 sink.success();
             });
         });
     }
+
+    public WtpInPayload receiveData() {
+        return receiveFlux.next().block();
+    }
+
 
     public void lock() {
         log.debug("WTP client locked");
