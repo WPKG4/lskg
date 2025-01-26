@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.Command;
 import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
+import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
@@ -25,6 +26,9 @@ public class DefaultCommands {
 
     @Inject
     public RatService ratService;
+
+    @Inject
+    private RatClientPoller ratClientPoller;
 
     @Command(name = "hello")
     public ActionOutPayload hello(Channel channel) {
@@ -101,7 +105,13 @@ public class DefaultCommands {
             return new ActionOutPayload("new-socket", 1, message, message.length());
         }
 
-        rat.sockets.add(new WtpClient(channel));
+        WtpClient wtpClient = new WtpClient(channel);
+
+        rat.getSockets().add(wtpClient);
+
+        // Emit new WTP client id to ratClientPoller
+        ratClientPoller.getClientSink().tryEmitNext(channel.id().asShortText());
+
         String message = "Socket successfully added!";
         return new ActionOutPayload("new-socket", 0, message, message.length());
     }

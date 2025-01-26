@@ -49,7 +49,7 @@ public class WpkgServer implements ApplicationEventListener<StartupEvent> {
                                     .addLast(new ChannelMonitor(wtpClientService))
                                     .addLast(new WtpOutboundHandler())
                                     .addLast("HeaderDecoder", new HeaderDecoder())
-                                    .addLast(new PayloadLogicHandler());
+                                    .addLast(new PayloadLogicHandler(wtpClientService));
                         }
                     });
 

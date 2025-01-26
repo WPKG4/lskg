@@ -1,9 +1,13 @@
 package ovh.wpkg.lskg.server.handler;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
+import ovh.wpkg.lskg.server.dto.WtpClient;
+import ovh.wpkg.lskg.server.services.RatClientPoller;
+import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.WtpInPayload;
 import ovh.wpkg.lskg.server.types.in.ActionInPayload;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
@@ -14,13 +18,22 @@ import java.lang.reflect.Method;
 @Slf4j
 public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayload> {
 
+    public WtpClientService wtpClientService;
+
+    public PayloadLogicHandler(WtpClientService wtpClientService) {
+        this.wtpClientService = wtpClientService;
+    }
+
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WtpInPayload msg) {
         switch (msg) {
             case MessagePayload messagePayload -> {
-                handleMessagePayload(messagePayload);
+                log.debug("<RECEIVE> [{}] m {}", ctx.channel().id().asShortText(), messagePayload.getMessage());
+                handleMessagePayload(ctx, messagePayload);
             }
             case ActionInPayload actionPayload -> {
+                log.debug("<RECEIVE> [{}] a {}", ctx.channel().id().asShortText(), actionPayload.name);
                 ctx.writeAndFlush(handleActionPayload(ctx ,actionPayload));
             }
             default -> throw new IllegalStateException("Unexpected value: " + msg);
@@ -60,7 +73,8 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
         return commandResult;
     }
 
-    private void handleMessagePayload(MessagePayload msg) {
-        //TODO: zrób coś z message
+    private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload msg) {
+        WtpClient client = wtpClientService.getClient(ctx.channel());
+        client.getReceive().tryEmitNext(msg);
     }
 }
