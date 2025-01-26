@@ -21,15 +21,10 @@ public @Data class WtpClient {
     public boolean locked = false;
 
     public static @Data class ReceiveHandler {
-        private Runnable disposeCallback;
-
         private boolean isDisposed = false;
 
         public void dispose() {
             isDisposed = true;
-
-            if (disposeCallback != null)
-                disposeCallback.run();
         }
     }
 
@@ -38,25 +33,17 @@ public @Data class WtpClient {
     }
 
     public Mono<Void> receiveData(ReceiveCallback callback) {
-        return Mono.create(sink -> {
-            ReceiveHandler handler = new ReceiveHandler();
-            var subscription = receive.asFlux().subscribe(payload -> {
-                if (!handler.isDisposed) {
+        ReceiveHandler handler = new ReceiveHandler();
+        return receive.asFlux()
+                .takeWhile(it -> !handler.isDisposed())
+                .doOnError(error -> log.error("Error in receiveData: ", error))
+                .doOnNext(payload -> {
                     callback.onReceive(this, handler, payload);
-                }
-            });
 
-            handler.setDisposeCallback(() -> {
-                subscription.dispose();
-                sink.success();
-            });
-        });
+                    channel.config().setAutoRead(true);
+                })
+                .then();
     }
-
-    public WtpInPayload receiveData() {
-        return receiveFlux.next().block();
-    }
-
 
     public void lock() {
         log.debug("WTP client locked");
@@ -73,5 +60,9 @@ public @Data class WtpClient {
             channel.writeAndFlush(outPayload)
                     .addListener(future -> sink.success());
         });
+    }
+
+    public String getId() {
+        return getChannel().id().asShortText();
     }
 }

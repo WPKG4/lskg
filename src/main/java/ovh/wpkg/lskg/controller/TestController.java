@@ -12,9 +12,7 @@ import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.RatService;
-import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
-import reactor.core.publisher.Mono;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,7 +28,6 @@ public class TestController {
     @Inject
     RatClientPoller ratClientPoller;
 
-
     @Get
     @ExecuteOn(TaskExecutors.VIRTUAL)
     public String ping() {
@@ -42,12 +39,14 @@ public class TestController {
 
         AtomicInteger i = new AtomicInteger(0);
 
+        wtpClient.send(new MessagePayload("TEST")).subscribe();
+
         wtpClient.receiveData((client1, handler, payload) -> {
             log.debug("DATA: {}", payload);
 
             i.incrementAndGet();
 
-            if (i.get() > 5) {
+            if (i.get() > 100) {
                 handler.dispose();
                 client1.unlock();
             }

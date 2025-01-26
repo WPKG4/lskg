@@ -24,7 +24,6 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
         this.wtpClientService = wtpClientService;
     }
 
-
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WtpInPayload msg) {
         switch (msg) {
@@ -74,7 +73,10 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
     }
 
     private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload msg) {
+        ctx.channel().config().setAutoRead(false);
+
         WtpClient client = wtpClientService.getClient(ctx.channel());
+
         client.getReceive().tryEmitNext(msg);
     }
 }
