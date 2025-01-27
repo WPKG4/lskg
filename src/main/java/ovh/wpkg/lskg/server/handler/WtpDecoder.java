@@ -45,7 +45,8 @@ public class WtpDecoder extends ByteToMessageDecoder {
         }
 
         if (in.readableBytes() < 2 || in.readByte() != ' ') {
-            throw new IllegalArgumentException("Invalid message format: missing space after prefix");
+            in.resetReaderIndex();
+            return;
         }
 
         if (prefix == MESSAGE_PREFIX) {
@@ -79,7 +80,8 @@ public class WtpDecoder extends ByteToMessageDecoder {
                 break;
             }
             if (b < '0' || b > '9') {
-                throw new IllegalArgumentException("Invalid message length: must be numeric");
+                in.resetReaderIndex();
+                return;
             }
             messageLength = messageLength * 10 + (b - '0');
         }
