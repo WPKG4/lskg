@@ -22,52 +22,61 @@ public class WtpDecoder extends ByteToMessageDecoder {
     private static final byte PING_PREFIX = 'p';
     private static final byte DEFAULT_DELIMITER = '\n';
 
+    private DecoderState state = DecoderState.DECODE_HEADER;
+
+    private enum DecoderState {
+        DECODE_HEADER,
+        DECODE_MESSAGE,
+        DECODE_ACTION
+    }
+
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) { // TODO: refactor that nigga
-        in.markReaderIndex();
-
-        if (in.readableBytes() < 1) {
-            return;
-        }
-
-        byte prefix = in.readByte();
-
-        if (prefix == PING_PREFIX) {
-            if (in.readableBytes() >= 1 && in.readByte() == DEFAULT_DELIMITER) {
-                var buffer = ctx.alloc().buffer(1);
-                log.debug("Received ping from: {}", ctx.channel().localAddress());
-                buffer.writeByte((byte) 0x70);
-                ctx.write(buffer);
-                return;
-            } else {
-                throw new IllegalArgumentException("Invalid ping format");
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+        switch (state) {
+            case DECODE_HEADER -> {
+                if (in.readableBytes() < 1) {
+                    return;
+                }
+                byte prefix = in.readByte();
+                if (in.readableBytes() < 2 || in.readByte() != ' ') {
+                    in.resetReaderIndex();
+                    return;
+                }
+                switch (prefix) {
+                    case 'p' -> {
+                        if (in.readableBytes() >= 1 && in.readByte() == DEFAULT_DELIMITER) {
+                            var buffer = ctx.alloc().buffer(1);
+                            log.debug("Received ping from: {}", ctx.channel().localAddress());
+                            buffer.writeByte((byte) 0x70);
+                            ctx.write(buffer);
+                            return;
+                        } else {
+                            throw new IllegalArgumentException("Invalid ping format");
+                        }
+                    }
+                    case 'm' -> {
+                        state = DecoderState.DECODE_MESSAGE;
+                    }
+                    case 'b' -> {
+                        throw new UnsupportedOperationException("Binary payload type is not yet implemented");
+                    }
+                    case 'a' -> {
+                        state = DecoderState.DECODE_ACTION;
+                    }
+                    case 's' -> {
+                        throw new UnsupportedOperationException("Subscribe payload type is not yet implemented");
+                    }
+                }
+                in.markReaderIndex(); // Makujemy sobie index tutaj, dzięki czemu te jebane handlery nie będą miały przypadkiem dostep do headera xD
+                                      // Dzięki temu też header się nie "parsuje" 32455342542312534 razy w zależności na ile pakietów się podzieli
+            }
+            case DECODE_MESSAGE -> {
+                decodeMessage(in, out);
+            }
+            case DECODE_ACTION -> {
+                decodeAction(in, out);
             }
         }
-
-        if (in.readableBytes() < 2 || in.readByte() != ' ') {
-            in.resetReaderIndex();
-            return;
-        }
-
-        if (prefix == MESSAGE_PREFIX) {
-            decodeMessage(in, out);
-            return;
-        }
-
-        if (prefix == BINARY_PREFIX) {
-            throw new UnsupportedOperationException("Binary payload type is not yet implemented");
-        }
-
-        if (prefix == ACTION_PREFIX) {
-            decodeAction(in, out);
-            return;
-        }
-
-        if (prefix == SUBSCRIBE_PREFIX) {
-            throw new UnsupportedOperationException("Subscribe payload type is not yet implemented");
-        }
-
-        throw new IllegalArgumentException("Invalid message prefix");
     }
 
     private void decodeMessage(ByteBuf in, List<Object> out) {
@@ -99,6 +108,7 @@ public class WtpDecoder extends ByteToMessageDecoder {
         ByteBuf messageBuf = in.readBytes(messageLength);
         String message = messageBuf.toString(StandardCharsets.UTF_8);
 
+        state = DecoderState.DECODE_HEADER;
         out.add(new MessagePayload(message));
     }
 
@@ -135,6 +145,8 @@ public class WtpDecoder extends ByteToMessageDecoder {
                 parameters.put(parts[0].trim(), parts[1].trim());
             }
         }
+
+        state = DecoderState.DECODE_HEADER;
         out.add(new ActionInPayload(actionName, parameters));
     }
 }
