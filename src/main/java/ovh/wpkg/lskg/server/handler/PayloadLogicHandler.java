@@ -72,11 +72,11 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
         return commandResult;
     }
 
+    int i = 0;
+
     private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload msg) {
-        ctx.channel().config().setAutoRead(false);
+        log.debug("MESSAGE: {}, {}",msg.getMessage(),i);
 
-        WtpClient client = wtpClientService.getClient(ctx.channel());
-
-        client.getReceive().tryEmitNext(msg);
+        i++;
     }
 }
