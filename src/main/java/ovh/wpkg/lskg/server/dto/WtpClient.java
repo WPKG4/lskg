@@ -20,29 +20,18 @@ public @Data class WtpClient {
 
     public boolean locked = false;
 
-    public static @Data class ReceiveHandler {
-        private boolean isDisposed = false;
-
-        public void dispose() {
-            isDisposed = true;
-        }
-    }
+    ReceiveCallback receiveCallback = null;
 
     public interface ReceiveCallback {
-        void onReceive(WtpClient client, ReceiveHandler handler, WtpInPayload payload);
+        void onReceive(WtpClient client, WtpInPayload payload);
     }
 
-    public Mono<Void> receiveData(ReceiveCallback callback) {
-        ReceiveHandler handler = new ReceiveHandler();
-        return receive.asFlux()
-                .takeWhile(it -> !handler.isDisposed())
-                .doOnError(error -> log.error("Error in receiveData: ", error))
-                .doOnNext(payload -> {
-                    callback.onReceive(this, handler, payload);
+    public void receiveData(ReceiveCallback callback) {
+        receiveCallback = callback;
+    }
 
-                    channel.config().setAutoRead(true);
-                })
-                .then();
+    public void stopReceive() {
+        receiveCallback = null;
     }
 
     public void lock() {

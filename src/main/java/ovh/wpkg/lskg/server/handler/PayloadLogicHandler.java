@@ -72,11 +72,14 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
         return commandResult;
     }
 
-    int i = 0;
 
     private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload msg) {
-        log.debug("MESSAGE: {}, {}",msg.getMessage(),i);
+        WtpClient client = wtpClientService.getClient(ctx.channel());
 
-        i++;
+        if (client.getReceiveCallback() != null) {
+            client.getReceiveCallback().onReceive(client, msg);
+        } else {
+            log.warn("Payload was not received by RAT client");
+        }
     }
 }

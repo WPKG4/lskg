@@ -13,6 +13,7 @@ import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
+import reactor.core.publisher.Mono;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,29 +31,32 @@ public class TestController {
 
     @Get
     @ExecuteOn(TaskExecutors.VIRTUAL)
-    public String ping() {
-        RatClient client = ratService.getClientList()[0];
+    public Mono<String> ping() {
+        return Mono.create(sink -> {
+            RatClient client = ratService.getClientList()[0];
 
-        WtpClient wtpClient = ratClientPoller.poolClient(client);
+            WtpClient wtpClient = ratClientPoller.poolClient(client);
 
-        wtpClient.lock();
+            wtpClient.lock();
 
-        AtomicInteger i = new AtomicInteger(0);
+            AtomicInteger i = new AtomicInteger(0);
 
-        wtpClient.send(new MessagePayload("TEST")).subscribe();
+            wtpClient.send(new MessagePayload("TEST")).subscribe();
 
-        wtpClient.receiveData((client1, handler, payload) -> {
-            log.debug("DATA: {}", payload);
 
-            i.incrementAndGet();
+            wtpClient.receiveData((client1, payload) -> {
+                log.debug("DATA: {}", payload);
 
-            if (i.get() > 100) {
-                handler.dispose();
-                client1.unlock();
-            }
-        }).block();
+                if (i.get() == 999) {
+                    client1.stopReceive();
+                    client1.unlock();
 
-        return "Success";
+                    sink.success("Success");
+                }
+
+                i.incrementAndGet();
+            });
+        });
     }
 
 
