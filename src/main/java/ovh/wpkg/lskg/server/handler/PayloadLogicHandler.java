@@ -9,6 +9,7 @@ import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.WtpInPayload;
+import ovh.wpkg.lskg.server.types.bi.BinaryPayload;
 import ovh.wpkg.lskg.server.types.in.ActionInPayload;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
@@ -28,18 +29,20 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
     protected void channelRead0(ChannelHandlerContext ctx, WtpInPayload msg) {
         switch (msg) {
             case MessagePayload messagePayload -> {
-                log.debug("<RECEIVE> [{}] m {}", ctx.channel().id().asShortText(), messagePayload.getMessage());
                 handleMessagePayload(ctx, messagePayload);
             }
             case ActionInPayload actionPayload -> {
-                log.debug("<RECEIVE> [{}] a {}", ctx.channel().id().asShortText(), actionPayload.name);
                 ctx.writeAndFlush(handleActionPayload(ctx ,actionPayload));
+            }
+            case BinaryPayload binaryPayload -> {
+                handleBinaryPayload(ctx, binaryPayload);
             }
             default -> throw new IllegalStateException("Unexpected value: " + msg);
         }
     }
 
     private ActionOutPayload handleActionPayload(ChannelHandlerContext ctx, ActionInPayload payload) {
+        log.debug("<RECEIVE> [{}] a {}", ctx.channel().id().asShortText(), payload.name);
         ActionOutPayload commandResult = null;
 
         if (CommandRegistry.hasCommand(payload.name)) {
@@ -72,14 +75,11 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
         return commandResult;
     }
 
+    private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload payload) {
+        log.debug("<RECEIVE> [{}] m {}", ctx.channel().id().asShortText(), payload.getMessage());
+    }
 
-    private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload msg) {
-        WtpClient client = wtpClientService.getClient(ctx.channel());
-
-        if (client.getReceiveCallback() != null) {
-            client.getReceiveCallback().onReceive(client, msg);
-        } else {
-            log.warn("Payload was not received by RAT client");
-        }
+    private void handleBinaryPayload(ChannelHandlerContext ctx, BinaryPayload payload) {
+        log.debug("<RECEIVE> [{}] m {}", ctx.channel().id().asShortText(), payload.getBytes());
     }
 }

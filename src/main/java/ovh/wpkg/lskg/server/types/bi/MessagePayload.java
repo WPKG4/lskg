@@ -7,7 +7,6 @@ import ovh.wpkg.lskg.server.types.WtpInPayload;
 import ovh.wpkg.lskg.server.types.WtpOutPayload;
 
 
-@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 public @Data class MessagePayload implements WtpInPayload, WtpOutPayload {
     public String message;

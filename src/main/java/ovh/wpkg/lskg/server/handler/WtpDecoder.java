@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import lombok.extern.slf4j.Slf4j;
+import ovh.wpkg.lskg.server.types.bi.BinaryPayload;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 import ovh.wpkg.lskg.server.types.in.ActionInPayload;
 
@@ -27,48 +28,15 @@ public class WtpDecoder extends ByteToMessageDecoder {
     private enum DecoderState {
         DECODE_HEADER,
         DECODE_MESSAGE,
-        DECODE_ACTION
+        DECODE_ACTION,
+        DECODE_BINARY
     }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         switch (state) {
             case DECODE_HEADER -> {
-                if (in.readableBytes() < 1) {
-                    return;
-                }
-                byte prefix = in.readByte();
-                if (in.readableBytes() < 2 || in.readByte() != ' ') {
-                    in.resetReaderIndex();
-                    return;
-                }
-                switch (prefix) {
-                    case 'p' -> {
-                        if (in.readableBytes() >= 1 && in.readByte() == DEFAULT_DELIMITER) {
-                            var buffer = ctx.alloc().buffer(1);
-                            log.debug("Received ping from: {}", ctx.channel().localAddress());
-                            buffer.writeByte((byte) 0x70);
-                            ctx.write(buffer);
-                            return;
-                        } else {
-                            throw new IllegalArgumentException("Invalid ping format");
-                        }
-                    }
-                    case 'm' -> {
-                        state = DecoderState.DECODE_MESSAGE;
-                    }
-                    case 'b' -> {
-                        throw new UnsupportedOperationException("Binary payload type is not yet implemented");
-                    }
-                    case 'a' -> {
-                        state = DecoderState.DECODE_ACTION;
-                    }
-                    case 's' -> {
-                        throw new UnsupportedOperationException("Subscribe payload type is not yet implemented");
-                    }
-                }
-                in.markReaderIndex(); // Makujemy sobie index tutaj, dzięki czemu te jebane handlery nie będą miały przypadkiem dostep do headera xD
-                                      // Dzięki temu też header się nie "parsuje" 32455342542312534 razy w zależności na ile pakietów się podzieli
+                decodePayloadPrefix(ctx, in, out);
             }
             case DECODE_MESSAGE -> {
                 decodeMessage(in, out);
@@ -76,7 +44,47 @@ public class WtpDecoder extends ByteToMessageDecoder {
             case DECODE_ACTION -> {
                 decodeAction(in, out);
             }
+            case DECODE_BINARY -> {
+                decodeBinary(in, out);
+            }
         }
+    }
+
+    private void decodePayloadPrefix(ChannelHandlerContext ctx,ByteBuf in, List<Object> out) {
+        if (in.readableBytes() < 1) {
+            return;
+        }
+        byte prefix = in.readByte();
+        if (in.readableBytes() < 2 || in.readByte() != ' ') {
+            in.resetReaderIndex();
+            return;
+        }
+        switch (prefix) {
+            case 'p' -> {
+                if (in.readableBytes() >= 1 && in.readByte() == DEFAULT_DELIMITER) {
+                    var buffer = ctx.alloc().buffer(1);
+                    log.debug("Received ping from: {}", ctx.channel().localAddress());
+                    buffer.writeByte((byte) 0x70);
+                    ctx.write(buffer);
+                    return;
+                } else {
+                    throw new IllegalArgumentException("Invalid ping format");
+                }
+            }
+            case 'm' -> {
+                state = DecoderState.DECODE_MESSAGE;
+            }
+            case 'b' -> {
+                state = DecoderState.DECODE_BINARY;
+            }
+            case 'a' -> {
+                state = DecoderState.DECODE_ACTION;
+            }
+            case 's' -> {
+                throw new UnsupportedOperationException("Subscribe payload type is not yet implemented");
+            }
+        }
+        in.markReaderIndex();
     }
 
     private void decodeMessage(ByteBuf in, List<Object> out) {
@@ -148,5 +156,38 @@ public class WtpDecoder extends ByteToMessageDecoder {
 
         state = DecoderState.DECODE_HEADER;
         out.add(new ActionInPayload(actionName, parameters));
+    }
+
+    private void decodeBinary(ByteBuf in, List<Object> out) {
+        int binaryLength = 0;
+        boolean foundNewline = false;
+        while (in.isReadable()) {
+            byte b = in.readByte();
+            if (b == DEFAULT_DELIMITER) {
+                foundNewline = true;
+                break;
+            }
+            if (b < '0' || b > '9') {
+                in.resetReaderIndex();
+                return;
+            }
+            binaryLength = binaryLength * 10 + (b - '0');
+        }
+
+        if (!foundNewline) {
+            in.resetReaderIndex();
+            return;
+        }
+
+        if (in.readableBytes() < binaryLength) {
+            in.resetReaderIndex();
+            return;
+        }
+
+        byte[] bytes = new byte[binaryLength];
+        in.readBytes(bytes);
+
+        state = DecoderState.DECODE_HEADER;
+        out.add(new BinaryPayload(bytes));
     }
 }

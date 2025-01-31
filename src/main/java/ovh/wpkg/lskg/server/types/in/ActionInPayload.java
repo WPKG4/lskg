@@ -7,7 +7,6 @@ import ovh.wpkg.lskg.server.types.WtpInPayload;
 
 import java.util.Map;
 
-@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 public @Data class ActionInPayload implements WtpInPayload {
     public String name;
