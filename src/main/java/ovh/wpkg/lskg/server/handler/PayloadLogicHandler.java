@@ -77,9 +77,23 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
 
     private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload payload) {
         log.debug("<RECEIVE> [{}] m {}", ctx.channel().id().asShortText(), payload.getMessage());
+
+        redirectPayload(ctx, payload);
     }
 
     private void handleBinaryPayload(ChannelHandlerContext ctx, BinaryPayload payload) {
         log.debug("<RECEIVE> [{}] b {}", ctx.channel().id().asShortText(), payload.getBytes());
+
+        redirectPayload(ctx, payload);
+    }
+
+    private void redirectPayload(ChannelHandlerContext ctx, WtpInPayload payload) {
+        WtpClient client = wtpClientService.getClient(ctx.channel());
+
+        if (client.getReceiveCallback() != null) {
+            client.getReceiveCallback().onReceive(client, payload);
+        } else {
+            log.warn("Payload was not received by RAT client");
+        }
     }
 }
