@@ -129,16 +129,26 @@ public class WtpDecoder extends ByteToMessageDecoder {
             }
             actionNameBuilder.append((char) b);
         }
+        log.debug("{}", in.isReadable());
         String actionName = actionNameBuilder.toString();
 
         StringBuilder packet = new StringBuilder();
+
+        boolean foundPayloadEnd = false;
+
         while (in.isReadable()) {
             byte b = in.readByte();
             packet.append((char) b);
             if (b == DEFAULT_DELIMITER && in.isReadable() && in.getByte(in.readerIndex()) == DEFAULT_DELIMITER) {
                 in.readByte();
+                foundPayloadEnd = true;
                 break;
             }
+        }
+
+        if (!foundPayloadEnd) {
+            in.resetReaderIndex();
+            return;
         }
 
         String packetString = packet.toString();
