@@ -80,6 +80,6 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
     }
 
     private void handleBinaryPayload(ChannelHandlerContext ctx, BinaryPayload payload) {
-        log.debug("<RECEIVE> [{}] m {}", ctx.channel().id().asShortText(), payload.getBytes());
+        log.debug("<RECEIVE> [{}] b {}", ctx.channel().id().asShortText(), payload.getBytes());
     }
 }
