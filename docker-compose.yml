@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: lskg_db
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: lskg
+    ports:
+      - "5432:5432"
+    volumes:
+      - lskg-postgres-vol:/var/lib/postgresql/data
+volumes:
+  lskg-postgres-vol:

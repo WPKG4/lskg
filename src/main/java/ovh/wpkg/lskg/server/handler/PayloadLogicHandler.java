@@ -1,12 +1,10 @@
 package ovh.wpkg.lskg.server.handler;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.dto.WtpClient;
-import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.WtpInPayload;
 import ovh.wpkg.lskg.server.types.bi.BinaryPayload;
