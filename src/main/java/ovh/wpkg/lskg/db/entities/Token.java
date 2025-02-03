@@ -9,20 +9,16 @@ import lombok.*;
 import java.time.Instant;
 
 @MappedEntity("users")
-public @Data class User {
+public @Data class Token {
     @Id
     @GeneratedValue(GeneratedValue.Type.AUTO)
     @EqualsAndHashCode.Exclude
     private Long id;
 
-    private String email;
-    private String passwordHash;
+    private String token;
+    private String username;
+    private boolean revoked;
 
     @DateCreated
     private Instant dateCreated;
-
-    public User(@NonNull String email, @NonNull String passwordHash) {
-        this.email = email;
-        this.passwordHash = passwordHash;
-    }
 }

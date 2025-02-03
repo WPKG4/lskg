@@ -1,6 +1,6 @@
 micronaut:
   server:
-    port: 8081
+    port: 8080
   application:
     name: lskg
   router:
@@ -13,12 +13,18 @@ micronaut:
         mapping: /swagger-ui/**
   security:
     authentication: bearer
+    interceptUrlMap:
+      - pattern: "/**"
+        httpMethod: GET
+        access:
+          - isAnonymous()
     token:
       jwt:
         signatures:
           secret:
             generator:
               secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
+
 datasources:
   default:
     url: jdbc:postgresql://localhost:5432/lskg

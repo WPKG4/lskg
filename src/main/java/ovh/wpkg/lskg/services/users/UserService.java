@@ -1,10 +1,11 @@
-package ovh.wpkg.lskg.services;
+package ovh.wpkg.lskg.services.users;
 
 import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import ovh.wpkg.lskg.db.entities.User;
 import ovh.wpkg.lskg.db.repository.UserRepository;
+import ovh.wpkg.lskg.utils.HashUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,8 +29,8 @@ public class UserService {
     }
 
     @Transactional
-    public User saveUser(User user) {
-        return userRepository.save(user);
+    public User registerUser(String email, String password) {
+        return userRepository.save(new User(email, HashUtils.generateSHA256(password)));
     }
 
     @Transactional
