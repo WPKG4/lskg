@@ -12,18 +12,33 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
   security:
+    enabled: true
     authentication: bearer
+    endpoints:
+      login:
+        enabled: true
+        path: /api/auth/login
+      oauth:
+        enabled: true
+        path: /api/oauth/token
+        get-allowed: true
     interceptUrlMap:
       - pattern: "/**"
         httpMethod: GET
         access:
           - isAnonymous()
     token:
+      generator:
+        access-token:
+          expiration: 3600
       jwt:
+        generator:
+          refresh-token:
+            secret: "${JWT_GENERATOR_REFRESH_SECRET:eefe82f8-7ca6-11ea-bc55-0242ac130003}"
         signatures:
           secret:
             generator:
-              secret: ${JWT_GENERATOR_SIGNATURE_SECRET:pleaseChangeThisSecretForANewOne}
+              secret: "${JWT_GENERATOR_SIGNATURE_SECRET:eefe82f8-7ca6-11ea-bc55-0242ac130003}"
 
 datasources:
   default:
