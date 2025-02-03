@@ -1,12 +1,10 @@
 package ovh.wpkg.lskg.db.entities;
 
-import io.micronaut.data.annotation.DateCreated;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @MappedEntity("users")
 public @Data class User {
@@ -20,6 +18,9 @@ public @Data class User {
 
     @DateCreated
     private Instant dateCreated;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "users")
+    private List<Token> tokens;
 
     public User(@NonNull String email, @NonNull String passwordHash) {
         this.email = email;

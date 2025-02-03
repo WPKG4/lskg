@@ -30,8 +30,17 @@ public class UserService {
 
     @Transactional
     public User registerUser(String email, String password) {
+        if (password.length() < 4) {
+            throw new IllegalArgumentException("Password must be at least 4 characters long");
+        }
+
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("User with this email already exists");
+        }
+
         return userRepository.save(new User(email, HashUtils.generateSHA256(password)));
     }
+
 
     @Transactional
     public void deleteUserById(Long id) {

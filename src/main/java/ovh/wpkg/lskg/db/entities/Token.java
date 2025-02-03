@@ -1,19 +1,19 @@
 package ovh.wpkg.lskg.db.entities;
 
-import io.micronaut.data.annotation.DateCreated;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.*;
 import lombok.*;
 
 import java.time.Instant;
 
-@MappedEntity("users")
+@MappedEntity("tokens")
 public @Data class Token {
     @Id
     @GeneratedValue(GeneratedValue.Type.AUTO)
     @EqualsAndHashCode.Exclude
     private Long id;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private User user;
 
     private String token;
     private String username;
