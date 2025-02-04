@@ -5,15 +5,15 @@ import lombok.*;
 
 import java.time.Instant;
 
+@Getter
+@Setter
+@ToString
 @MappedEntity("tokens")
-public @Data class Token {
+public class Token {
     @Id
     @GeneratedValue(GeneratedValue.Type.AUTO)
     @EqualsAndHashCode.Exclude
     private Long id;
-
-    @Relation(value = Relation.Kind.MANY_TO_ONE)
-    private User user;
 
     private String token;
     private String username;

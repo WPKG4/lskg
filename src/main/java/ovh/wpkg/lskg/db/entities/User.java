@@ -6,8 +6,11 @@ import lombok.*;
 import java.time.Instant;
 import java.util.List;
 
+@Getter
+@Setter
+@ToString
 @MappedEntity("users")
-public @Data class User {
+public class User {
     @Id
     @GeneratedValue(GeneratedValue.Type.AUTO)
     @EqualsAndHashCode.Exclude
@@ -19,14 +22,8 @@ public @Data class User {
     @DateCreated
     private Instant dateCreated;
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "users")
-    private List<Token> tokens;
-
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "users")
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "owner")
     private List<RatInfo> ownedRats;
-
-    @Relation(value = Relation.Kind.MANY_TO_MANY)
-    private List<RatInfo> sharedRats;
 
     public User(@NonNull String email, @NonNull String passwordHash) {
         this.email = email;

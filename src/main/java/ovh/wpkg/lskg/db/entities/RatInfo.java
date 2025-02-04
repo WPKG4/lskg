@@ -1,6 +1,7 @@
 package ovh.wpkg.lskg.db.entities;
 
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.sql.JoinColumn;
 import lombok.*;
 
 import java.time.Instant;
@@ -10,6 +11,7 @@ import java.util.UUID;
 @MappedEntity("ratclients")
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class RatInfo {
@@ -19,11 +21,8 @@ public class RatInfo {
     private Long id;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)
-    @NonNull
+    @JoinColumn(name = "owner_id")
     private User owner;
-
-    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "sharedrats", cascade = Relation.Cascade.ALL)
-    private List<User> sharedUsers;
 
     @NonNull
     private UUID uuid;

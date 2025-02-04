@@ -4,9 +4,12 @@ import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.db.entities.RatInfo;
+import ovh.wpkg.lskg.db.entities.RatShares;
 import ovh.wpkg.lskg.db.entities.User;
 import ovh.wpkg.lskg.db.repository.RatInfoRepository;
+import ovh.wpkg.lskg.db.repository.RatSharesRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,8 +17,11 @@ import java.util.UUID;
 
 @Singleton
 @RequiredArgsConstructor
+@Slf4j
 public class RatInfoService {
     private final RatInfoRepository ratInfoRepository;
+
+    private final RatSharesRepository ratSharesRepository;
 
     public List<RatInfo> findAll() {
         return ratInfoRepository.findAll();
@@ -40,14 +46,16 @@ public class RatInfoService {
     }
 
     @Transactional
-    public RatInfo shareRat(UUID uuid, User user) {
-        var ratInfo = findByUuid(uuid);
-        System.out.println(ratInfo);
-        if (!ratInfo.orElseThrow().getSharedUsers().contains(user)) {
-            ratInfo.orElseThrow().getSharedUsers().add(user);
-        }
+    public void shareRat(UUID uuid, User user) {
+        var ratInfo = findByUuid(uuid).orElseThrow();
 
-        return ratInfoRepository.update(ratInfo.orElseThrow());
+        log.info("Sharing RAT {} owned by {} to user {}", ratInfo.getUuid(), ratInfo.getOwner().getEmail(), user.getEmail());
+
+        RatShares ratShares = new RatShares();
+        ratShares.setRatInfo(ratInfo);
+        ratShares.setUser(user);
+
+        ratSharesRepository.save(ratShares);
     }
 
     @Transactional
