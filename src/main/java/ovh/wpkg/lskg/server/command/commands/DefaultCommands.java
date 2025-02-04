@@ -11,6 +11,8 @@ import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.RatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
+import ovh.wpkg.lskg.services.rat.RatInfoService;
+import ovh.wpkg.lskg.services.users.UserService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +28,12 @@ public class DefaultCommands {
 
     @Inject
     public RatService ratService;
+
+    @Inject
+    public RatInfoService ratInfoService;
+
+    @Inject
+    public UserService userService;
 
     @Inject
     private RatClientPoller ratClientPoller;
@@ -64,6 +72,10 @@ public class DefaultCommands {
             UUID uuid = UUID.fromString(params.get("uuid"));
             String user = params.get("user");
             String hostname = params.get("hostname");
+
+            ratInfoService.registerRat(userService.findUserById(1L).orElseThrow(), uuid, hostname, user);
+            ratInfoService.shareRat(uuid, userService.findUserById(2L).orElseThrow());
+            //ratInfoService.shareRat(uuid, userService.findUserById(3L).orElseThrow());
 
             var wtpClient = wtpClientService.getClient(channel);
 
