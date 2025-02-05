@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatClientPoller;
-import ovh.wpkg.lskg.server.services.RatService;
+import ovh.wpkg.lskg.server.services.ConnectedRatService;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 import reactor.core.publisher.Mono;
 
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TestController {
 
     @Inject
-    RatService ratService;
+    ConnectedRatService connectedRatService;
 
     @Inject
     RatClientPoller ratClientPoller;
@@ -33,7 +33,7 @@ public class TestController {
     @ExecuteOn(TaskExecutors.VIRTUAL)
     public Mono<String> ping() {
         return Mono.create(sink -> {
-            RatClient client = ratService.getClientList()[0];
+            RatClient client = connectedRatService.getClientList().getFirst();
 
             WtpClient wtpClient = ratClientPoller.poolClient(client);
 
@@ -63,7 +63,7 @@ public class TestController {
     @Get("/broadcast")
     public void broadcast() {
         log.debug("Broadcast endpoint hit");
-        for (RatClient client : ratService.getClientList()) {
+        for (RatClient client : connectedRatService.getClientList()) {
             for (WtpClient socket : client.sockets) {
                 socket.send(new MessagePayload("hello")).subscribe();
             }

@@ -20,12 +20,12 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public Optional<User> findUserById(Long id) {
-        return userRepository.findById(id);
+    public User findUserById(Long id) {
+        return userRepository.findById(id).orElseThrow();
     }
 
-    public Optional<User> findUserByEmail(String email) {
-        return userRepository.findByEmail(email);
+    public User findUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow();
     }
 
     @Transactional

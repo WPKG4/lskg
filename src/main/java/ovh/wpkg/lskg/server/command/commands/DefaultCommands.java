@@ -8,7 +8,7 @@ import ovh.wpkg.lskg.server.command.Command;
 import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatClientPoller;
-import ovh.wpkg.lskg.server.services.RatService;
+import ovh.wpkg.lskg.server.services.ConnectedRatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
 import ovh.wpkg.lskg.services.rat.RatInfoService;
@@ -27,7 +27,7 @@ public class DefaultCommands {
     public WtpClientService wtpClientService;
 
     @Inject
-    public RatService ratService;
+    public ConnectedRatService connectedRatService;
 
     @Inject
     public UserService userService;
@@ -73,12 +73,12 @@ public class DefaultCommands {
             String user = params.get("user");
             String hostname = params.get("hostname");
 
-            ratInfoService.registerRat(userService.findUserById(1L).orElseThrow(), uuid, hostname, user);
-            ratInfoService.shareRat(uuid, userService.findUserById(2L).orElseThrow());
+            ratInfoService.registerRat(userService.findUserById(1L), uuid, hostname, user);
+//            ratInfoService.shareRat(uuid, userService.findUserById(2L));
 
             var wtpClient = wtpClientService.getClient(channel);
 
-            ratService.addClient(wtpClient, uuid, user, hostname);
+            connectedRatService.addClient(wtpClient, uuid, user, hostname);
 
             String message = "Registered client " + user + " " + hostname + " has been added!";
             return new ActionOutPayload("core-init", 0, message, message.length());
@@ -111,7 +111,7 @@ public class DefaultCommands {
             return new ActionOutPayload("new-socket", 1, message, message.length());
         }
 
-        RatClient rat = ratService.getByUUID(uuid);
+        RatClient rat = connectedRatService.getByUUID(uuid);
         if (rat == null) {
             String message = "No entity found for UUID: " + uuid;
             return new ActionOutPayload("new-socket", 1, message, message.length());

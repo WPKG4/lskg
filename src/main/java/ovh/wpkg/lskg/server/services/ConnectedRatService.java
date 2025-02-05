@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Slf4j
 @Singleton
-public class RatService {
+public class ConnectedRatService {
 
     private final List<RatClient> clients = new ArrayList<>();
 
@@ -20,8 +20,8 @@ public class RatService {
         clients.add(new RatClient(client, uuid, username, hostname, new ArrayList<>()));
     }
 
-    public RatClient[] getClientList() {
-        return clients.toArray(RatClient[]::new);
+    public List<RatClient> getClientList() {
+        return clients.stream().toList();
     }
 
     public RatClient getByUUID(UUID uuid) {

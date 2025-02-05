@@ -17,7 +17,7 @@ public class RatClientPoller {
     Sinks.Many<String> clientSink = Sinks.many().multicast().onBackpressureBuffer();
 
     @Inject
-    RatService ratService;
+    ConnectedRatService connectedRatService;
 
     @Inject
     WtpClientService wtpClientService;

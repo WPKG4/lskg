@@ -24,7 +24,7 @@ public class UserAuthenticationProvider<B> implements HttpRequestAuthenticationP
             AuthenticationRequest<String, String> authenticationRequest
     ) {
         try {
-            var user = userService.findUserByEmail(authenticationRequest.getIdentity()).orElseThrow();
+            var user = userService.findUserByEmail(authenticationRequest.getIdentity());
 
             return Objects.equals(HashUtils.generateSHA256(authenticationRequest.getSecret()), user.getPasswordHash())
                     ? AuthenticationResponse.success(authenticationRequest.getIdentity())
