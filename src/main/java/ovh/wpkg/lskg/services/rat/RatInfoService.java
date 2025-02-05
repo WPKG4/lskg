@@ -1,57 +1,36 @@
 package ovh.wpkg.lskg.services.rat;
 
-import io.micronaut.transaction.annotation.Transactional;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
+import jakarta.transaction.Transactional;
 import ovh.wpkg.lskg.db.entities.RatInfo;
 import ovh.wpkg.lskg.db.entities.User;
 import ovh.wpkg.lskg.db.repository.RatInfoRepository;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Singleton
-@RequiredArgsConstructor
 public class RatInfoService {
-    private final RatInfoRepository ratInfoRepository;
 
-    public List<RatInfo> findAll() {
-        return ratInfoRepository.findAll();
-    }
+    @Inject
+    RatInfoRepository ratInfoRepository;
 
-    public Optional<RatInfo> findById(Long id) {
-        return ratInfoRepository.findById(id);
-    }
+    @Transactional
+    public void registerRat(User owner, UUID uuid, String hostname, String username) {
+        var ratInfo = ratInfoRepository.findByUuid(uuid);
 
-    public Optional<RatInfo> findByUuid(UUID uuid) {
-        return ratInfoRepository.findByUuid(uuid);
+        if (ratInfo.isEmpty()) {
+            ratInfoRepository.save(new RatInfo(null, uuid, hostname, username, true, owner, null, null));
+        }
     }
 
     @Transactional
-    public RatInfo save(RatInfo ratInfo) {
-        return ratInfoRepository.save(ratInfo);
-    }
-
-    @Transactional
-    public RatInfo registerRat(User owner, UUID uuid, String hostname, String username) {
-        return ratInfoRepository.save(new RatInfo(owner, uuid, hostname, username));
-    }
-
-    @Transactional
-    public RatInfo shareRat(UUID uuid, User user) {
-        var ratInfo = findByUuid(uuid);
-        System.out.println(ratInfo);
-        if (!ratInfo.orElseThrow().getSharedUsers().contains(user)) {
-            ratInfo.orElseThrow().getSharedUsers().add(user);
+    public void shareRat(UUID uuid, User user) {
+        var ratInfo = ratInfoRepository.findByUuid(uuid);
+        if (!ratInfo.orElseThrow().getSharedToUsers().contains(user)) {
+            ratInfo.orElseThrow().getSharedToUsers().add(user);
         }
 
-        return ratInfoRepository.update(ratInfo.orElseThrow());
-    }
-
-    @Transactional
-    public void deleteById(Long id) {
-        ratInfoRepository.deleteById(id);
+        ratInfoRepository.update(ratInfo.orElseThrow());
     }
 }

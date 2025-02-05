@@ -1,24 +1,31 @@
 package ovh.wpkg.lskg.db.entities;
 
-import io.micronaut.data.annotation.*;
+import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
-@MappedEntity("tokens")
-public @Data class Token {
+@Entity
+@Table(name = "tokens")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Token {
     @Id
-    @GeneratedValue(GeneratedValue.Type.AUTO)
-    @EqualsAndHashCode.Exclude
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Relation(value = Relation.Kind.MANY_TO_ONE)
-    private User user;
-
+    @Column(nullable = false, unique = true)
     private String token;
+
+    @Column(nullable = false)
     private String username;
+
+    @Column(nullable = false)
     private boolean revoked;
 
-    @DateCreated
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private Instant dateCreated;
 }

@@ -1,35 +1,41 @@
 package ovh.wpkg.lskg.db.entities;
 
-import io.micronaut.data.annotation.*;
+import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.List;
 
-@MappedEntity("users")
-public @Data class User {
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+public class User {
     @Id
-    @GeneratedValue(GeneratedValue.Type.AUTO)
-    @EqualsAndHashCode.Exclude
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String passwordHash;
 
-    @DateCreated
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private Instant dateCreated;
 
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "users")
-    private List<Token> tokens;
-
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "users")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RatInfo> ownedRats;
 
-    @Relation(value = Relation.Kind.MANY_TO_MANY)
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "sharedToUsers", cascade = CascadeType.ALL)
     private List<RatInfo> sharedRats;
 
     public User(@NonNull String email, @NonNull String passwordHash) {
         this.email = email;
         this.passwordHash = passwordHash;
+        this.dateCreated = Instant.now();
     }
 }

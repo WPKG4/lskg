@@ -129,7 +129,6 @@ public class WtpDecoder extends ByteToMessageDecoder {
             }
             actionNameBuilder.append((char) b);
         }
-        log.debug("{}", in.isReadable());
         String actionName = actionNameBuilder.toString();
 
         StringBuilder packet = new StringBuilder();

@@ -48,6 +48,20 @@ datasources:
     password: 1234
     dialect: POSTGRES
     schema-generate: CREATE
+jpa:
+  default:
+    packages-to-scan: ovh.wpkg.lskg
+    compile-time-hibernate-proxies: true
+    entity-scan:
+      packages:
+        - ovh.wpkg.lskg
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        bytecode:
+          provider: none
+
 flyway:
   datasources:
     default:

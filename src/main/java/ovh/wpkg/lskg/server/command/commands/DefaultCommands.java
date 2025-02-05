@@ -30,13 +30,13 @@ public class DefaultCommands {
     public RatService ratService;
 
     @Inject
-    public RatInfoService ratInfoService;
-
-    @Inject
     public UserService userService;
 
     @Inject
     private RatClientPoller ratClientPoller;
+
+    @Inject
+    private RatInfoService ratInfoService;
 
     @Command(name = "hello")
     public ActionOutPayload hello(Channel channel) {
@@ -75,7 +75,6 @@ public class DefaultCommands {
 
             ratInfoService.registerRat(userService.findUserById(1L).orElseThrow(), uuid, hostname, user);
             ratInfoService.shareRat(uuid, userService.findUserById(2L).orElseThrow());
-            //ratInfoService.shareRat(uuid, userService.findUserById(3L).orElseThrow());
 
             var wtpClient = wtpClientService.getClient(channel);
 
@@ -87,6 +86,7 @@ public class DefaultCommands {
             String message = "Invalid UUID format: " + params.get("uuid");
             return new ActionOutPayload("core-init", 2, message, message.length());
         } catch (Exception e) {
+            e.printStackTrace();
             String message = "An unexpected error occurred: " + e.getMessage();
             return new ActionOutPayload("core-init", 3, message, message.length());
         }

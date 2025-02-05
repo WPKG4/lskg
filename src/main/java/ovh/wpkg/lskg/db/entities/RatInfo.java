@@ -1,49 +1,48 @@
 package ovh.wpkg.lskg.db.entities;
 
-import io.micronaut.data.annotation.*;
+import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-@MappedEntity("ratclients")
+@Entity
+@Table(name = "rat_clients")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class RatInfo {
     @Id
-    @GeneratedValue(GeneratedValue.Type.AUTO)
-    @EqualsAndHashCode.Exclude
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Relation(value = Relation.Kind.MANY_TO_ONE)
-    @NonNull
-    private User owner;
-
-    @Relation(value = Relation.Kind.MANY_TO_MANY, mappedBy = "sharedrats", cascade = Relation.Cascade.ALL)
-    private List<User> sharedUsers;
-
-    @NonNull
+    @Column(nullable = false, unique = true)
     private UUID uuid;
 
-    @NonNull
+    @Column(nullable = false)
     private String hostname;
 
-    @NonNull
+    @Column(nullable = false)
     private String username;
 
+    @Column(nullable = false)
     private boolean active;
 
-    @DateCreated
-    private Instant dateCreated;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    public RatInfo(@NonNull User owner, @NonNull UUID uuid, @NonNull String hostname, @NonNull String username) {
-        this.owner = owner;
-        this.uuid = uuid;
-        this.hostname = hostname;
-        this.username = username;
-        this.active = true;
-    }
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "rat_shares",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "rat_info_id"))
+    private List<User> sharedToUsers;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant dateCreated;
 }
