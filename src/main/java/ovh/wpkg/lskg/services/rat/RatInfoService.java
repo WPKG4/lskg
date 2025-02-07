@@ -26,7 +26,7 @@ public class RatInfoService {
         var ratInfo = ratInfoRepository.findByUuid(uuid);
 
         if (ratInfo.isEmpty()) {
-            ratInfoRepository.save(new RatInfo(null, uuid, hostname, username, true, owner, null, null));
+            ratInfoRepository.save(new RatInfo(null, uuid, hostname, username, true, owner, null));
         }
     }
 
@@ -54,15 +54,5 @@ public class RatInfoService {
                             .coreVersion("0.0.0")
                             .build();
                 }).toList();
-    }
-
-    @Transactional
-    public void shareRat(UUID uuid, User user) {
-        var ratInfo = ratInfoRepository.findByUuid(uuid);
-        if (!ratInfo.orElseThrow().getSharedToUsers().contains(user)) {
-            ratInfo.orElseThrow().getSharedToUsers().add(user);
-        }
-
-        ratInfoRepository.update(ratInfo.orElseThrow());
     }
 }

@@ -44,8 +44,6 @@ public class DebugController {
 
         for (var rat : rats) {
             log.debug("RAT: {}", rat.getUuid());
-
-            log.debug("Users size: {}", rat.getSharedToUsers().size());
         }
 
         return HttpResponse.ok();

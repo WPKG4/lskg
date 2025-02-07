@@ -30,9 +30,6 @@ public class User {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RatInfo> ownedRats;
 
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "sharedToUsers", cascade = CascadeType.ALL)
-    private List<RatInfo> sharedRats;
-
     public User(@NonNull String email, @NonNull String passwordHash) {
         this.email = email;
         this.passwordHash = passwordHash;

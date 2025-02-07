@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -34,13 +33,6 @@ public class RatInfo {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "rat_shares",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "rat_info_id"))
-    private List<User> sharedToUsers;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
