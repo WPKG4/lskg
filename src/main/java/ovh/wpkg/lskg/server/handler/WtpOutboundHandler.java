@@ -17,22 +17,27 @@ public class WtpOutboundHandler extends ChannelOutboundHandlerAdapter {
             return;
         }
 
-        String reply;
-
-        switch (wtpResponse) {
-            case ActionOutPayload actionResponse -> {
-                reply = actionResponse.toString();
-                log.debug("Outbound handler processing action: {}", actionResponse.message);
+        byte[] reply = switch (wtpResponse) {
+            case ActionOutPayload a -> {
+                log.debug("<SENT> [{}] <ACTION PAYLOAD> \"{}\" len {}: {}",
+                        ctx.channel().id().asShortText(),
+                        a.getName(),
+                        a.getMessage().length(),
+                        a.getMessage());
+                yield a.toString().getBytes();
             }
-            case MessagePayload messagePayload -> {
-                reply = messagePayload.toString();
-                log.debug("Outbound handler processing message: {}", messagePayload.getMessage());
+            case MessagePayload m -> {
+                log.debug("<SENT> [{}] <MESSAGE PAYLOAD> len {}: {}",
+                        ctx.channel().id().asShortText(),
+                        m.getMessage().length(),
+                        m.getMessage());
+                yield m.toString().getBytes();
             }
             default -> throw new IllegalStateException("Unexpected value: " + wtpResponse);
-        }
+        };
 
-        var buf = ctx.alloc().buffer(reply.length());
-        buf.writeBytes(reply.getBytes());
+        var buf = ctx.alloc().buffer(reply.length);
+        buf.writeBytes(reply);
 
         ctx.writeAndFlush(buf, promise);
     }

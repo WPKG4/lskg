@@ -23,12 +23,12 @@ public class RegisterController {
     @Post
     public HttpResponse<?> register(@Body UserRegisterRequest request) {
         try {
-            log.info("Registering new user {}",request.getEmail());
-            userService.registerUser(request.getEmail(),request.getPassword());
+            log.info("Registering new user {}", request.getEmail());
+            userService.registerUser(request.getEmail(), request.getPassword());
             return HttpResponse.ok();
         } catch (IllegalArgumentException e) {
-            log.error("Registering user {}: {}",request.getEmail(),e.getMessage());
-            return HttpResponse.badRequest(new ErrorResponse(500,e.getMessage()));
+            log.error("Registering user {}: {}",request.getEmail(), e.getMessage());
+            return HttpResponse.badRequest(new ErrorResponse(500, e.getMessage()));
         }
     }
 }

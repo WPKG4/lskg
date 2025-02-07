@@ -1,5 +1,6 @@
 package ovh.wpkg.lskg.server.services;
 
+import io.netty.channel.Channel;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.dto.RatClient;
@@ -33,7 +34,37 @@ public class ConnectedRatService {
         return null;
     }
 
+    public RatClient getByChannel(Channel channel) {
+        return clients.stream()
+                .filter((it) ->
+                        it.getMasterClient()
+                                .getChannel()
+                                .id()
+                                .asShortText()
+                                .equals(channel.id().asShortText())
+                ).findFirst().orElseThrow();
+    }
+
+    public boolean isWtpClientRat(WtpClient wtpClient) {
+        if (wtpClient == null)
+            return false;
+        return clients.stream()
+                .anyMatch((it) ->
+                        it.getMasterClient()
+                                .getChannel()
+                                .id()
+                                .asShortText()
+                                .equals(wtpClient.getChannel().id().asShortText())
+                );
+    }
+
+    public void removeByChannel(Channel channel) {
+        clients.removeIf(client -> client.getMasterClient().getChannel().id().asShortText()
+                .equals(channel.id().asShortText()));
+    }
+
     public void removeByWtpClient(WtpClient wtpClient) {
-        clients.removeIf(client -> client.getMasterClient().equals(wtpClient));
+        clients.removeIf(client -> client.getMasterClient().getChannel().id().asShortText()
+                .equals(wtpClient.getChannel().id().asShortText()));
     }
 }

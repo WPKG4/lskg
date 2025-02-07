@@ -35,18 +35,10 @@ public class WtpDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         switch (state) {
-            case DECODE_HEADER -> {
-                decodePayloadPrefix(ctx, in, out);
-            }
-            case DECODE_MESSAGE -> {
-                decodeMessage(in, out);
-            }
-            case DECODE_ACTION -> {
-                decodeAction(in, out);
-            }
-            case DECODE_BINARY -> {
-                decodeBinary(in, out);
-            }
+            case DECODE_HEADER -> decodePayloadPrefix(ctx, in, out);
+            case DECODE_MESSAGE -> decodeMessage(in, out);
+            case DECODE_ACTION -> decodeAction(in, out);
+            case DECODE_BINARY -> decodeBinary(in, out);
         }
     }
 
@@ -71,18 +63,10 @@ public class WtpDecoder extends ByteToMessageDecoder {
                     throw new IllegalArgumentException("Invalid ping format");
                 }
             }
-            case 'm' -> {
-                state = DecoderState.DECODE_MESSAGE;
-            }
-            case 'b' -> {
-                state = DecoderState.DECODE_BINARY;
-            }
-            case 'a' -> {
-                state = DecoderState.DECODE_ACTION;
-            }
-            case 's' -> {
-                throw new UnsupportedOperationException("Subscribe payload type is not yet implemented");
-            }
+            case 'm' -> state = DecoderState.DECODE_MESSAGE;
+            case 'b' -> state = DecoderState.DECODE_BINARY;
+            case 'a' -> state = DecoderState.DECODE_ACTION;
+            case 's' -> throw new UnsupportedOperationException("Subscribe payload type is not yet implemented");
         }
         in.markReaderIndex();
     }

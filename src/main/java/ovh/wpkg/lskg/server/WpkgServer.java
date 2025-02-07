@@ -1,5 +1,6 @@
 package ovh.wpkg.lskg.server;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
 import io.netty.bootstrap.ServerBootstrap;
@@ -13,24 +14,31 @@ import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
 import ovh.wpkg.lskg.server.handler.*;
 import ovh.wpkg.lskg.server.command.CommandRegistry;
+import ovh.wpkg.lskg.server.services.ConnectedRatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 
 @Slf4j
 @Singleton
 public class WpkgServer implements ApplicationEventListener<StartupEvent> {
-    // TODO: Add loading from file
     private static final int port = 5000;
 
     @Inject
-    private DefaultCommands defaultCommands;
+    private ApplicationContext applicationContext;
 
     @Inject
     private WtpClientService wtpClientService;
 
+    @Inject
+    private CommandRegistry commandRegistry;
+
+    @Inject
+    private ConnectedRatService connectedRatService;
+
     public void start() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        CommandRegistry.registerCommand(defaultCommands);
+
+        commandRegistry.registerCommand(applicationContext.createBean(DefaultCommands.class));
 
         try {
             ServerBootstrap b = new ServerBootstrap();
@@ -46,7 +54,7 @@ public class WpkgServer implements ApplicationEventListener<StartupEvent> {
                                     .addLast(new ChannelMonitor(wtpClientService))
                                     .addLast(new WtpOutboundHandler())
                                     .addLast(new WtpDecoder())
-                                    .addLast(new PayloadLogicHandler(wtpClientService));
+                                    .addLast(new PayloadLogicHandler(wtpClientService, commandRegistry, connectedRatService));
                         }
                     });
 
