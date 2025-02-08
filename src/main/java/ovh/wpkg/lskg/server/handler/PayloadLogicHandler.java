@@ -86,10 +86,10 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-//        if (connectedRatService.isWtpClientRat(wtpClientService.getClient(ctx.channel()))) {
-//            log.debug("RAT disconnected");
-//            connectedRatService.removeByChannel(ctx.channel());
-//        }
+    public void channelInactive(ChannelHandlerContext ctx) {
+        if (connectedRatService.isClientRatByChannel(ctx.channel())) {
+            log.debug("RAT {} disconnected", ctx.channel().id().asShortText());
+            connectedRatService.removeByChannel(ctx.channel());
+        }
     }
 }

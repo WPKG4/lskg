@@ -22,7 +22,7 @@ public class ConnectedRatService {
     }
 
     public List<RatClient> getClientList() {
-        return clients.stream().toList();
+        return clients;
     }
 
     public RatClient getByUUID(UUID uuid) {
@@ -45,16 +45,14 @@ public class ConnectedRatService {
                 ).findFirst().orElseThrow();
     }
 
-    public boolean isWtpClientRat(WtpClient wtpClient) {
-        if (wtpClient == null)
-            return false;
+    public boolean isClientRatByChannel(Channel channel) {
         return clients.stream()
                 .anyMatch((it) ->
                         it.getMasterClient()
                                 .getChannel()
                                 .id()
                                 .asShortText()
-                                .equals(wtpClient.getChannel().id().asShortText())
+                                .equals(channel.id().asShortText())
                 );
     }
 
