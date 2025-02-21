@@ -51,7 +51,7 @@ public @Data class WtpClient {
         });
     }
 
-    public String getId() {
+    public String id() {
         return getChannel().id().asShortText();
     }
 }

@@ -12,7 +12,7 @@ import java.util.UUID;
 @Serdeable
 @AllArgsConstructor
 @Builder
-public @Data class RatDTO {
+public @Data class RatDto {
     private UUID uuid;
     private String username;
     private String hostname;

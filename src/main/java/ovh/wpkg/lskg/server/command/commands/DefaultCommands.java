@@ -14,6 +14,7 @@ import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
 import ovh.wpkg.lskg.services.rat.RatInfoService;
 import ovh.wpkg.lskg.services.users.UserService;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Singleton
@@ -61,7 +62,7 @@ public class DefaultCommands {
 
             var wtpClient = wtpClientService.getClient(context.getWtpClient().getChannel());
 
-            connectedRatService.addClient(wtpClient, uuid, user, hostname);
+            connectedRatService.addClient(new RatClient(wtpClient, uuid, user, hostname, new ArrayList<>()));
 
             return context.response(0,"Registered client " + user + " " + hostname + " has been added!");
         } catch (Exception e) {
@@ -86,7 +87,7 @@ public class DefaultCommands {
             rat.getSockets().add(wtpClient);
 
             // Emit new WTP client id to ratClientPoller
-            ratClientPoller.getClientSink().tryEmitNext(context.getWtpClient().getChannel().id().asShortText());
+            ratClientPoller.getClientSink().tryEmitNext(context.getWtpClient().id());
 
             return context.response(0, "Socket successfully added!");
         } catch (IllegalArgumentException e) {

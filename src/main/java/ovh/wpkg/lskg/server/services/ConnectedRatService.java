@@ -6,63 +6,47 @@ import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Singleton
 public class ConnectedRatService {
 
-    private final List<RatClient> clients = new ArrayList<>();
+    private final Map<UUID, RatClient> clients = new ConcurrentHashMap<>();
 
-    public void addClient(WtpClient client, UUID uuid, String username, String hostname) {
-        log.debug("Registered client {}, username={}, hostname={}", uuid, username, hostname);
-        clients.add(new RatClient(client, uuid, username, hostname, new ArrayList<>()));
-    }
-
-    public List<RatClient> getClientList() {
-        return clients;
+    public void addClient(RatClient client) {
+        log.debug("Registered client {}, username={}, hostname={}",
+                client.getUuid(), client.getUsername(), client.getHostname());
+        clients.put(client.getUuid(), client);
     }
 
     public RatClient getByUUID(UUID uuid) {
-        for (RatClient client : clients) {
-            if (client.getUuid().equals(uuid)) {
-                return client;
-            }
-        }
-        return null;
+        return clients.get(uuid);
+    }
+
+    public Map<UUID, RatClient> getRatsMap() {
+        return clients;
     }
 
     public RatClient getByChannel(Channel channel) {
-        return clients.stream()
-                .filter((it) ->
-                        it.getMasterClient()
-                                .getChannel()
-                                .id()
-                                .asShortText()
-                                .equals(channel.id().asShortText())
-                ).findFirst().orElseThrow();
+        return clients.values().stream()
+                .filter(it -> it.getMasterClient().getChannel().equals(channel))
+                .findFirst()
+                .orElseThrow();
     }
 
     public boolean isClientRatByChannel(Channel channel) {
-        return clients.stream()
-                .anyMatch((it) ->
-                        it.getMasterClient()
-                                .getChannel()
-                                .id()
-                                .asShortText()
-                                .equals(channel.id().asShortText())
-                );
+        return clients.values().stream()
+                .anyMatch(it -> it.getMasterClient().getChannel().equals(channel));
     }
 
-    public void removeByChannel(Channel channel) {
-        clients.removeIf(client -> client.getMasterClient().getChannel().id().asShortText()
-                .equals(channel.id().asShortText()));
+    public void removeByUUID(UUID uuid) {
+        clients.remove(uuid);
     }
 
     public void removeByWtpClient(WtpClient wtpClient) {
-        clients.removeIf(client -> client.getMasterClient().getChannel().id().asShortText()
-                .equals(wtpClient.getChannel().id().asShortText()));
+        clients.values().removeIf(client -> client.getMasterClient().id().equals(wtpClient.id()));
     }
 }
