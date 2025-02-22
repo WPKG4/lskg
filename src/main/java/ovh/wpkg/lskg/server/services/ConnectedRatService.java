@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,10 @@ public class ConnectedRatService {
         return clients;
     }
 
+    public List<RatClient> getRatsList() {
+        return clients.values().stream().toList();
+    }
+
     public RatClient getByChannel(Channel channel) {
         return clients.values().stream()
                 .filter(it -> it.getMasterClient().getChannel().equals(channel))
@@ -48,5 +53,9 @@ public class ConnectedRatService {
 
     public void removeByWtpClient(WtpClient wtpClient) {
         clients.values().removeIf(client -> client.getMasterClient().id().equals(wtpClient.id()));
+    }
+
+    public void removeByChannel(Channel channel) {
+        clients.values().removeIf(client -> client.getMasterClient().id().equals(channel.id().asShortText()));
     }
 }

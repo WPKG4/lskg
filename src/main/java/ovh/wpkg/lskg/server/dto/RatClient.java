@@ -1,13 +1,15 @@
 package ovh.wpkg.lskg.server.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @AllArgsConstructor
-public @Data class RatClient {
+@Getter
+@Setter
+@ToString
+public class RatClient {
     public WtpClient masterClient;
     public UUID uuid;
     public String username;

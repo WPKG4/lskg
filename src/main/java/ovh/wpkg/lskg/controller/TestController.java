@@ -6,43 +6,33 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.security.rules.SecurityRule;
-import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import ovh.wpkg.lskg.controller.base.WpkgBaseController;
 import ovh.wpkg.lskg.server.dto.RatClient;
 import ovh.wpkg.lskg.server.dto.WtpClient;
-import ovh.wpkg.lskg.server.services.RatClientPoller;
-import ovh.wpkg.lskg.server.services.ConnectedRatService;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
 
 @Controller("/test")
 @Secured(SecurityRule.IS_ANONYMOUS)
 @Slf4j
-public class TestController {
-
-    @Inject
-    ConnectedRatService connectedRatService;
-
-    @Inject
-    RatClientPoller ratClientPoller;
+@ExecuteOn(TaskExecutors.VIRTUAL)
+public class TestController extends WpkgBaseController {
 
     @Get
-    @ExecuteOn(TaskExecutors.VIRTUAL)
     public Mono<String> ping() {
         return Mono.create(sink -> {
-            RatClient client = connectedRatService.getClientList().getFirst();
+            RatClient client = connectedRatService.getRatsList().getFirst();
 
             WtpClient wtpClient = ratClientPoller.poolClient(client);
-
             wtpClient.lock();
 
             AtomicInteger i = new AtomicInteger(0);
 
             wtpClient.send(new MessagePayload("TEST")).subscribe();
-
 
             wtpClient.receiveData((client1, payload) -> {
                 log.debug("DATA: {}", payload);
@@ -59,14 +49,17 @@ public class TestController {
         });
     }
 
+    @Get("/hello")
+    public void helloCommand() {
+        RatClient client = connectedRatService.getRatsList().getFirst();
 
-    @Get("/broadcast")
-    public void broadcast() {
-        log.debug("Broadcast endpoint hit");
-        for (RatClient client : connectedRatService.getClientList()) {
-            for (WtpClient socket : client.sockets) {
-                socket.send(new MessagePayload("hello")).subscribe();
-            }
-        }
+        WtpClient wtpClient = ratClientPoller.poolClient(client);
+        wtpClient.lock();
+
+        wtpClient.send(
+                commandPayload("hello", Map.of())
+        ).block();
+        
+        wtpClient.unlock();
     }
 }

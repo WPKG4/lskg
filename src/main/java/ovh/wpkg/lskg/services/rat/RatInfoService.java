@@ -3,6 +3,7 @@ package ovh.wpkg.lskg.services.rat;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import ovh.wpkg.lskg.db.entities.RatInfo;
 import ovh.wpkg.lskg.db.entities.User;
 import ovh.wpkg.lskg.db.repository.RatInfoRepository;
@@ -13,13 +14,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Singleton
+@AllArgsConstructor
 public class RatInfoService {
 
-    @Inject
-    RatInfoRepository ratInfoRepository;
-
-    @Inject
-    ConnectedRatService connectedRatService;
+    private final RatInfoRepository ratInfoRepository;
+    private final ConnectedRatService connectedRatService;
 
     @Transactional
     public void registerRat(User owner, UUID uuid, String hostname, String username) {

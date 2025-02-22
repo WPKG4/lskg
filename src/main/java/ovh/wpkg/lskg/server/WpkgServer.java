@@ -10,6 +10,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.commands.DefaultCommands;
 import ovh.wpkg.lskg.server.handler.*;
@@ -19,20 +20,14 @@ import ovh.wpkg.lskg.server.services.WtpClientService;
 
 @Slf4j
 @Singleton
+@AllArgsConstructor
 public class WpkgServer implements ApplicationEventListener<StartupEvent> {
     private static final int port = 5000;
 
-    @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
-    private WtpClientService wtpClientService;
-
-    @Inject
-    private CommandRegistry commandRegistry;
-
-    @Inject
-    private ConnectedRatService connectedRatService;
+    private final ApplicationContext applicationContext;
+    private final WtpClientService wtpClientService;
+    private final CommandRegistry commandRegistry;
+    private final ConnectedRatService connectedRatService;
 
     public void start() throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();

