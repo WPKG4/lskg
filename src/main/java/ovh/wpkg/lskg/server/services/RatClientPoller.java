@@ -30,14 +30,14 @@ public class RatClientPoller {
                 .findFirst();
 
         if (notLocked.isPresent()) {
-            log.debug("Detected unlocked client with id: {}", notLocked.get().id());
+            log.debug("[{}] Detected unlocked client", notLocked.get().id());
             return wtpClientService.getClient(notLocked.get().id());
         } else {
             ratClient.getMasterClient().send(new MessagePayload("NEW")).subscribe();
 
             var id = clientSink.asFlux().next().block();
 
-            log.debug("New WTP client for RAT detected: {}", id);
+            log.debug("[{}] New WTP client for RAT detected", id);
 
             // TODO: Make it better
             return wtpClientService.getClient(id);

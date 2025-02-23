@@ -45,7 +45,7 @@ public class TestController extends WpkgBaseController {
                 }
 
                 i.incrementAndGet();
-            });
+            }).onError((e) -> sink.success("Error"));
         });
     }
 
@@ -61,5 +61,17 @@ public class TestController extends WpkgBaseController {
         ).block();
         
         wtpClient.unlock();
+    }
+
+    @Get("/error")
+    public Mono<String> errorCommand() {
+        return Mono.create((sink) -> {
+            RatClient client = connectedRatService.getRatsList().getFirst();
+
+            WtpClient wtpClient = ratClientPoller.poolClient(client);
+            wtpClient.lock();
+
+            wtpClient.onError((e) -> sink.success(e.getMessage()));
+        });
     }
 }

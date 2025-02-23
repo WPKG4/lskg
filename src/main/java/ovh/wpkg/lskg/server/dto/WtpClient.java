@@ -7,6 +7,10 @@ import ovh.wpkg.lskg.server.types.WtpInPayload;
 import ovh.wpkg.lskg.server.types.WtpOutPayload;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Consumer;
+
+import static ovh.wpkg.lskg.server.handler.WtpChannelAttributes.CLIENT_ID;
+
 @RequiredArgsConstructor
 @Slf4j
 @Getter
@@ -17,17 +21,25 @@ public class WtpClient {
 
     public boolean locked = false;
     ReceiveCallback receiveCallback = null;
+    Consumer<Exception> errorCallback = null;
 
     public interface ReceiveCallback {
         void onReceive(WtpClient client, WtpInPayload payload);
     }
 
-    public void receiveData(ReceiveCallback callback) {
+    public WtpClient receiveData(ReceiveCallback callback) {
         receiveCallback = callback;
+        return this;
+    }
+
+    public WtpClient onError(Consumer<Exception> callback) {
+        errorCallback = callback;
+        return this;
     }
 
     public void stopReceive() {
         receiveCallback = null;
+        errorCallback = null;
     }
 
     public void lock() {
@@ -41,11 +53,18 @@ public class WtpClient {
     }
 
     public Mono<Void> send(WtpOutPayload outPayload) {
-        return Mono.create(sink -> channel.writeAndFlush(outPayload)
-                .addListener(future -> sink.success()));
+        return Mono.create(sink -> {
+            channel.writeAndFlush(outPayload).addListener(future -> {
+                if (future.isSuccess()) {
+                    sink.success();
+                } else {
+                    sink.error(future.cause());
+                }
+            });
+        });
     }
 
     public String id() {
-        return getChannel().id().asShortText();
+        return channel.attr(CLIENT_ID).get();
     }
 }

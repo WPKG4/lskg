@@ -47,15 +47,16 @@ public class ConnectedRatService {
                 .anyMatch(it -> it.getMasterClient().getChannel().equals(channel));
     }
 
+    public boolean isClientRatByWtp(WtpClient wtpClient) {
+        return clients.values().stream()
+                .anyMatch(it -> it.getMasterClient().id().equals(wtpClient.id()));
+    }
+
     public void removeByUUID(UUID uuid) {
         clients.remove(uuid);
     }
 
     public void removeByWtpClient(WtpClient wtpClient) {
         clients.values().removeIf(client -> client.getMasterClient().id().equals(wtpClient.id()));
-    }
-
-    public void removeByChannel(Channel channel) {
-        clients.values().removeIf(client -> client.getMasterClient().id().equals(channel.id().asShortText()));
     }
 }

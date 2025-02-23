@@ -14,6 +14,10 @@ import ovh.wpkg.lskg.server.types.in.ActionInPayload;
 import ovh.wpkg.lskg.server.types.bi.MessagePayload;
 import ovh.wpkg.lskg.server.types.out.ActionOutPayload;
 
+import java.io.IOException;
+
+import static ovh.wpkg.lskg.server.handler.WtpChannelAttributes.CLIENT_ID;
+
 @Slf4j
 public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayload> {
 
@@ -38,7 +42,9 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
     }
 
     private ActionOutPayload handleActionPayload(ChannelHandlerContext ctx, ActionInPayload payload) {
-        log.debug("<RECEIVE> [{}] a {}", ctx.channel().id().asShortText(), payload.getName());
+        log.debug("[{}] <RECEIVE> a {} {}", ctx.channel().attr(CLIENT_ID).get(), payload.getName(),
+                String.join(" ", payload.getParameters()
+                        .entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).toList()));
         ActionOutPayload commandResult;
 
         if (commandRegistry.hasCommand(payload.getName())) {
@@ -64,13 +70,14 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
     }
 
     private void handleMessagePayload(ChannelHandlerContext ctx, MessagePayload payload) {
-        log.debug("<RECEIVE> [{}] m {}", ctx.channel().id().asShortText(), payload.getMessage());
+        log.debug("[{}] <RECEIVE> m [len {}]: {}", ctx.channel().attr(CLIENT_ID).get(),
+                payload.getMessage().getBytes().length, payload.getMessage());
 
         redirectPayload(ctx, payload);
     }
 
     private void handleBinaryPayload(ChannelHandlerContext ctx, BinaryPayload payload) {
-        log.debug("<RECEIVE> [{}] b {}", ctx.channel().id().asShortText(), payload.getBytes());
+        log.debug("[{}] <RECEIVE> b [len {}]", ctx.channel().attr(CLIENT_ID).get(), payload.getBytes().length);
 
         redirectPayload(ctx, payload);
     }
@@ -81,15 +88,29 @@ public class PayloadLogicHandler extends SimpleChannelInboundHandler<WtpInPayloa
         if (client.getReceiveCallback() != null) {
             client.getReceiveCallback().onReceive(client, payload);
         } else {
-            log.warn("Payload was not received by RAT client");
+            log.warn("[{}] Payload was not received by RAT client", client.id());
         }
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        if (connectedRatService.isClientRatByChannel(ctx.channel())) {
-            log.debug("RAT {} disconnected", ctx.channel().id().asShortText());
-            connectedRatService.removeByChannel(ctx.channel());
+        WtpClient client = wtpClientService.getClient(ctx.channel());
+
+        if (client != null && client.getErrorCallback() != null) {
+            client.getErrorCallback().accept(new IOException("WTP client closed"));
+        }
+
+        if (client != null && connectedRatService.isClientRatByWtp(client)) {
+            log.debug("[{}] RAT disconnected", client.id());
+            connectedRatService.removeByWtpClient(client);
+        }
+    }
+
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        WtpClient client = wtpClientService.getClient(ctx.channel());
+
+        if (client.getErrorCallback() != null) {
+            client.getErrorCallback().accept((Exception) cause);
         }
     }
 }

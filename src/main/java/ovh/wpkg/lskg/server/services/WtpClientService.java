@@ -8,14 +8,15 @@ import ovh.wpkg.lskg.server.dto.WtpClient;
 
 import java.util.*;
 
+import static ovh.wpkg.lskg.server.handler.WtpChannelAttributes.CLIENT_ID;
+
 @Singleton
 @Slf4j
 public class WtpClientService {
     private final HashMap<String, WtpClient> clients = new HashMap<>();
 
     public void addClient(Channel channel) {
-        log.debug("Adding new WTP Client");
-        clients.put(channel.id().asShortText(), new WtpClient(channel));
+        clients.put(channel.attr(CLIENT_ID).get(), new WtpClient(channel));
     }
 
     public WtpClient getClient(String id) {
@@ -27,11 +28,10 @@ public class WtpClientService {
     }
 
     public WtpClient getClient(Channel channel) {
-        return clients.get(channel.id().asShortText());
+        return clients.get(channel.attr(CLIENT_ID).get());
     }
 
     public void removeByChannel(Channel channel) {
-        log.debug("Removing WTP Client");
-        clients.remove(channel.id().asShortText());
+        clients.remove(channel.attr(CLIENT_ID).get());
     }
 }
